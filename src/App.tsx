@@ -66,7 +66,9 @@ import {
   Building2,
   Heart,
   X,
-  Circle
+  Circle,
+  BookOpen,
+  GraduationCap
 } from 'lucide-react';
 import { cn } from './types';
 
@@ -2824,6 +2826,7 @@ const ProfilePage = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeSubPage, setActiveSubPage] = useState<'none' | 'orders' | 'coupons' | 'wallet' | 'my_competitions' | 'achievements' | 'id_card' | 'verification' | 'participants' | 'notifications' | 'my_games' | 'sports_map' | 'clubs' | 'favorites' | 'customer_service'>('none');
+  const [notificationTab, setNotificationTab] = useState<'tournament' | 'venue' | 'platform' | 'course'>('tournament');
   const [playerPool, setPlayerPool] = useState<ParticipantInfo[]>(MOCK_PLAYER_POOL);
   const [selectedCompetition, setSelectedCompetition] = useState<any | null>(null);
   const [competitionList, setCompetitionList] = useState([
@@ -3056,6 +3059,25 @@ const ProfilePage = ({
   }
 
   if (activeSubPage === 'notifications') {
+    const notifications = {
+      tournament: [
+        { title: '报名审核通过', content: '您的“羽协杯”业余羽毛球公开赛报名已审核通过，请准时参赛。', time: '10分钟前', unread: true, icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-50' },
+        { title: '抽签结果公示', content: '“夏季联赛-厦门站”抽签结果已出炉，点击查看您的对阵信息。', time: '2小时前', unread: false, icon: Trophy, color: 'text-brand-primary bg-brand-primary/10' },
+      ],
+      venue: [
+        { title: '订场即将开始', content: '您在“思明体育馆”预订的场地（1号场）将于1小时后开始。', time: '1小时前', unread: true, icon: Clock, color: 'text-brand-primary bg-brand-primary/10' },
+        { title: '订场成功通知', content: '您已成功预订“湖里体育馆”4月15日 19:00-21:00 场地。', time: '昨天', unread: false, icon: Calendar, color: 'text-blue-500 bg-blue-50' },
+      ],
+      platform: [
+        { title: '系统维护通知', content: '系统将于今晚22:00进行例行维护，预计耗时2小时，期间部分功能受限。', time: '昨天', unread: false, icon: AlertCircle, color: 'text-slate-400 bg-slate-50' },
+        { title: '新版本发布', content: '卡猫体育V2.1版本已上线，新增“AI找球场”功能，快来体验吧！', time: '3天前', unread: false, icon: Sparkles, color: 'text-brand-primary bg-brand-primary/5' },
+      ],
+      course: [
+        { title: '课程调课通知', content: '原定于本周六上午的“羽毛球进阶训练课”因教练临时有事调至周日下午。', time: '4小时前', unread: true, icon: BookOpen, color: 'text-orange-500 bg-orange-50' },
+        { title: '课程报名成功', content: '恭喜您成功报名“青少年羽毛球基础班”，请按时参加第一课。', time: '2天前', unread: false, icon: GraduationCap, color: 'text-emerald-500 bg-emerald-50' },
+      ]
+    };
+
     return (
       <div className="pb-20 bg-slate-50 min-h-screen">
         <header className="bg-white px-4 pt-12 pb-4 flex items-center gap-4 border-b border-slate-100 sticky top-0 z-50 w-full max-w-md">
@@ -3064,18 +3086,33 @@ const ProfilePage = ({
           </button>
           <h1 className="text-lg font-bold">消息通知</h1>
         </header>
-        <div className="p-4 space-y-3">
+        <div className="bg-white px-4 py-2 flex gap-2 border-b border-slate-100 sticky top-[88px] z-40 overflow-x-auto no-scrollbar">
           {[
-            { title: '报名审核通过', content: '您的“羽协杯”业余羽毛球公开赛报名已审核通过，请准时参赛。', time: '10分钟前', unread: true, icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-50' },
-            { title: '订场即将开始', content: '您在“思明体育馆”预订的场地（1号场）将于1小时后开始。', time: '1小时前', unread: true, icon: Clock, color: 'text-brand-primary bg-brand-primary/10' },
-            { title: '系统维护通知', content: '系统将于今晚22:00进行例行维护，预计耗时2小时，期间部分功能受限。', time: '昨天', unread: false, icon: AlertCircle, color: 'text-slate-400 bg-slate-50' },
-          ].map((msg, i) => (
+            { id: 'tournament', label: '赛事通知' },
+            { id: 'venue', label: '订场通知' },
+            { id: 'platform', label: '平台通知' },
+            { id: 'course', label: '课程通知' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setNotificationTab(tab.id as any)}
+              className={cn(
+                "flex-none px-4 py-2 rounded-xl text-[10px] font-black transition-all whitespace-nowrap",
+                notificationTab === tab.id ? "bg-brand-primary text-white shadow-md" : "text-slate-400"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="p-4 space-y-3">
+          {notifications[notificationTab].map((msg, i) => (
             <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100 card-shadow flex gap-4 relative">
               {msg.unread && <div className="absolute top-4 right-4 w-2 h-2 bg-red-500 rounded-full" />}
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", msg.color)}>
                 <msg.icon size={20} />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 flex-1">
                 <div className="flex justify-between items-center">
                   <h4 className="text-sm font-black text-slate-900">{msg.title}</h4>
                   <span className="text-[10px] font-bold text-slate-400">{msg.time}</span>
@@ -3084,6 +3121,12 @@ const ProfilePage = ({
               </div>
             </div>
           ))}
+          {notifications[notificationTab].length === 0 && (
+            <div className="py-20 flex flex-col items-center justify-center text-slate-300 gap-4">
+              <Bell size={48} strokeWidth={1} />
+              <p className="text-xs font-bold uppercase tracking-widest">暂无消息通知</p>
+            </div>
+          )}
         </div>
       </div>
     );
