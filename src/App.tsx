@@ -2825,11 +2825,11 @@ const LeaderManagementPage = ({
   onSelectTournament
 }: { 
   onBack: () => void,
-  initialTab?: 'registering' | 'ongoing',
+  initialTab?: 'registering' | 'ongoing' | 'history',
   initialSelectedMatchId?: string,
   onSelectTournament?: (tournament: Tournament) => void
 }) => {
-  const [activeTab, setActiveTab] = useState<'registering' | 'ongoing'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'registering' | 'ongoing' | 'history'>(initialTab);
   const [selectedMatch, setSelectedMatch] = useState<any | null>(null);
   const [lineup, setLineup] = useState<any[]>([]);
   const [showInviteQR, setShowInviteQR] = useState(false);
@@ -3032,6 +3032,40 @@ const LeaderManagementPage = ({
     }
   ];
 
+  const historyMatches = [
+    {
+      id: 'H1',
+      title: '2025年厦门市羽毛球公开赛',
+      status: 'finished',
+      teamName: '雷霆一队',
+      leaderName: '郭靖',
+      image: 'https://picsum.photos/seed/badminton4/800/400',
+      location: '厦门市体育中心',
+      matchStartTime: '2025-11-15 09:00',
+      type: 'Individual',
+      participants: 150,
+      maxParticipants: 200,
+      matches: [
+        { 
+          id: 'HM1',
+          category: '男单A组', 
+          groupInfo: '决赛',
+          player1: '郭靖', 
+          player2: '林丹', 
+          score1: 21,
+          score2: 19,
+          setScore1: 2,
+          setScore2: 1,
+          status: 'finished',
+          winner: 1,
+          time: '15:00',
+          date: '11/16',
+          court: '中央球场'
+        }
+      ]
+    }
+  ];
+
   useEffect(() => {
     if (selectedMatch?.id === 'L3') {
       setLineup(selectedMatch.lineupSlots);
@@ -3040,18 +3074,10 @@ const LeaderManagementPage = ({
 
   useEffect(() => {
     if (initialSelectedMatchId) {
-      const match = [...registeringMatches, ...ongoingMatches].find(m => m.id === initialSelectedMatchId);
+      const match = [...registeringMatches, ...ongoingMatches, ...historyMatches].find(m => m.id === initialSelectedMatchId);
       if (match) {
         setSelectedMatch(match);
       }
-    } else if (initialTab === 'registering' && registeringMatches.length > 0) {
-      // Direct navigation to first registering match if requested
-      setSelectedMatch(registeringMatches[0]);
-    } else if (initialTab === 'ongoing' && ongoingMatches.length > 0) {
-      // Direct navigation to specific ongoing match if requested
-      const targetMatch = ongoingMatches.find(m => m.id === 'L2') || ongoingMatches[0];
-      setSelectedMatch(targetMatch);
-      setDetailTab('schedule');
     }
   }, [initialSelectedMatchId]);
 
@@ -3724,6 +3750,7 @@ const LeaderManagementPage = ({
         {[
           { id: 'registering', label: '报名中' },
           { id: 'ongoing', label: '比赛中' },
+          { id: 'history', label: '历史比赛' },
         ].map(tab => (
           <button
             key={tab.id}
@@ -3745,7 +3772,12 @@ const LeaderManagementPage = ({
       </div>
 
       <div className="p-4 space-y-4">
-        {[...registeringMatches, ...ongoingMatches].filter(m => m.status === (activeTab === 'registering' ? 'registration' : 'ongoing')).map((t: any) => (
+        {[...registeringMatches, ...ongoingMatches, ...historyMatches].filter(m => {
+          if (activeTab === 'registering') return m.status === 'registration';
+          if (activeTab === 'ongoing') return m.status === 'ongoing';
+          if (activeTab === 'history') return m.status === 'finished';
+          return false;
+        }).map((t: any) => (
           <motion.div 
             key={t.id}
             whileTap={{ scale: 0.98 }}
@@ -3757,9 +3789,11 @@ const LeaderManagementPage = ({
               <div className="absolute top-2 left-2">
                 <span className={cn(
                   "text-[7px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider backdrop-blur-md border",
-                  t.status === 'registration' ? "bg-emerald-500/80 text-white border-emerald-400" : "bg-blue-500/80 text-white border-blue-400"
+                  t.status === 'registration' ? "bg-emerald-500/80 text-white border-emerald-400" : 
+                  t.status === 'ongoing' ? "bg-blue-500/80 text-white border-blue-400" :
+                  "bg-slate-500/80 text-white border-slate-400"
                 )}>
-                  {t.status === 'registration' ? '报名中' : '比赛中'}
+                  {t.status === 'registration' ? '报名中' : t.status === 'ongoing' ? '比赛中' : '已结束'}
                 </span>
               </div>
             </div>
@@ -3782,10 +3816,14 @@ const LeaderManagementPage = ({
                     <div className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100">
                       {getRegistrationCountdown(t.regEndTime)}
                     </div>
-                  ) : (
+                  ) : t.status === 'ongoing' ? (
                     <div className="text-[9px] font-black text-brand-primary bg-brand-primary/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                       <Activity size={8} />
                       查看赛况
+                    </div>
+                  ) : (
+                    <div className="text-[9px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                      查看回顾
                     </div>
                   )}
                 </div>
@@ -3823,7 +3861,7 @@ const ProfilePage = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeSubPage, setActiveSubPage] = useState<'none' | 'orders' | 'coupons' | 'wallet' | 'my_competitions' | 'achievements' | 'id_card' | 'verification' | 'participants' | 'notifications' | 'my_games' | 'sports_map' | 'clubs' | 'favorites' | 'customer_service' | 'leader_management'>('none');
-  const [leaderInitialState, setLeaderInitialState] = useState<{ tab: 'registering' | 'ongoing', matchId?: string }>({ tab: 'registering' });
+  const [leaderInitialState, setLeaderInitialState] = useState<{ tab: 'registering' | 'ongoing' | 'history', matchId?: string }>({ tab: 'registering' });
   const [notificationTab, setNotificationTab] = useState<'tournament' | 'venue' | 'platform' | 'course'>('tournament');
   const [playerPool, setPlayerPool] = useState<ParticipantInfo[]>(MOCK_PLAYER_POOL);
   const [selectedCompetition, setSelectedCompetition] = useState<any | null>(null);
@@ -6250,7 +6288,7 @@ const TournamentDetailPage = ({ tournament, onBack, onRegister }: { tournament: 
                 onClick={() => setShowWeChatQR(false)}
                 className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm"
               >
-                我知道了
+                扫码入群
               </button>
             </motion.div>
           </div>
@@ -9012,6 +9050,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
   const [selectedGroup, setSelectedGroup] = useState('A组');
   const [selectedSubGroup, setSelectedSubGroup] = useState('第1组');
   const [showRoundTable, setShowRoundTable] = useState(false);
+  const [activeRoundTab, setActiveRoundTab] = useState(0);
   const [showCheckInQR, setShowCheckInQR] = useState(false);
   const [showElectronicPass, setShowElectronicPass] = useState(false);
   const [idTab, setIdTab] = useState<'current' | 'history'>('current');
@@ -9416,138 +9455,106 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
       ? "14:30-15:45" 
       : `${formatTime(checkInStartMins)}-${formatTime(checkInEndMins)}`;
 
-    return (
-      <motion.div 
-        layout
-        key={match.id}
-        className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm relative group"
-      >
-        {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between border-b border-slate-50">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-4 bg-brand-primary rounded-full" />
-            <div className="flex flex-col">
-              <span className="text-sm font-black text-slate-800">{match.category} · {match.groupInfo}</span>
-              {tournament.id === '2' && match.subCategory && (
-                <span className="text-[10px] font-bold text-slate-400">{match.subCategory}</span>
-              )}
-            </div>
-          </div>
-          {isFinished ? (
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">已结束</span>
-          ) : isUpcoming ? (
-            <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">待检录</span>
-          ) : (
-            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">比赛中</span>
-          )}
-        </div>
-
-        <div className="p-6">
-          {tournament.id === '2' && match.team1 && (
-            <div className="flex items-center justify-between mb-6 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden">
-                  <img src={`https://picsum.photos/seed/${match.team1}/40/40`} alt={match.team1} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </div>
-                <span className="text-[11px] font-black text-slate-700">{match.team1}</span>
-              </div>
-              <div className="text-[10px] font-black text-slate-300">VS</div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-black text-slate-700">{match.team2}</span>
-                <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden">
-                  <img src={`https://picsum.photos/seed/${match.team2}/40/40`} alt={match.team2} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Time Info Grid */}
-          <div className="grid grid-cols-2 gap-px bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 mb-6">
-            <div className="bg-white p-4 flex flex-col items-center justify-center gap-1">
-              <div className="flex items-center gap-1.5 text-slate-400 mb-1">
-                <FileText size={12} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">检录时间</span>
-              </div>
-              <span className="text-xl font-black text-brand-primary tabular-nums">{checkInTimeStr.split('-')[0]}</span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">-{checkInTimeStr.split('-')[1]} · 检录台</span>
-            </div>
-            <div className="bg-white p-4 flex flex-col items-center justify-center gap-1">
-              <div className="flex items-center gap-1.5 text-slate-400 mb-1">
-                <Clock size={12} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">比赛时间</span>
-              </div>
-              <span className="text-xl font-black text-slate-900 tabular-nums">{match.time}</span>
-              <span className="text-[9px] font-bold text-brand-primary uppercase tracking-widest">{match.court}</span>
-            </div>
+    if (tournament.id === '2') {
+      return (
+        <motion.div 
+          layout
+          key={match.id}
+          className="bg-white rounded-sm border border-slate-200 transition-all shadow-sm relative overflow-hidden mb-4"
+        >
+          {/* Status Ribbon */}
+          <div className={cn(
+            "absolute top-0 right-0 px-8 py-1 translate-x-[30%] translate-y-[30%] rotate-45 text-[10px] font-black text-white z-10",
+            isFinished ? "bg-brand-primary" : (isOngoing ? "bg-red-500" : "bg-slate-400")
+          )}>
+            {isFinished ? '已结束' : (isOngoing ? '比赛中' : '待开始')}
           </div>
 
-          {/* Matchup */}
-          <div className="flex items-center justify-center gap-8 mb-6">
-            <div className="flex flex-col items-center gap-2">
-              <div className="relative">
-                <img 
-                  src={`https://picsum.photos/seed/${match.player1}/100/100`} 
-                  alt={match.player1} 
-                  className={cn(
-                    "w-16 h-16 rounded-full border-2 p-0.5",
-                    match.winner === 1 ? "border-brand-primary" : "border-slate-100"
-                  )}
-                  referrerPolicy="no-referrer"
-                />
-                {isFinished && match.winner === 1 && (
-                  <div className="absolute -bottom-1 -right-1 bg-brand-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
-                    胜
-                  </div>
-                )}
-              </div>
-              <span className={cn("text-sm font-black", match.winner === 1 ? "text-brand-primary" : "text-slate-800")}>{match.player1}</span>
-            </div>
-
-            <div className="flex flex-col items-center gap-2">
-              {isFinished ? (
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-2xl font-black text-slate-900 tabular-nums tracking-tighter">
-                    {match.setScore1} : {match.setScore2}
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-400 tabular-nums">
-                    ({match.score1}:{match.score2})
-                  </span>
-                </div>
-              ) : (
-                <span className="text-xs font-black text-slate-200 italic uppercase tracking-widest">VS</span>
-              )}
-            </div>
-
-            <div className="flex flex-col items-center gap-2">
-              <div className="relative">
-                <img 
-                  src={`https://picsum.photos/seed/${match.player2}/100/100`} 
-                  alt={match.player2} 
-                  className={cn(
-                    "w-16 h-16 rounded-full border-2 p-0.5",
-                    match.winner === 2 ? "border-brand-primary" : "border-slate-100"
-                  )}
-                  referrerPolicy="no-referrer"
-                />
-                {isFinished && match.winner === 2 && (
-                  <div className="absolute -bottom-1 -right-1 bg-brand-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
-                    胜
-                  </div>
-                )}
-              </div>
-              <span className={cn("text-sm font-black", match.winner === 2 ? "text-brand-primary" : "text-slate-800")}>{match.player2}</span>
-            </div>
+          <div className="absolute top-0 left-0 bg-brand-primary text-white px-2 py-1 text-[8px] font-black rounded-br-lg z-10 shadow-sm">
+            我的比赛
           </div>
 
-          {/* Action Area */}
-          {!isFinished && (
-            <div className="space-y-4">
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center">
-                    <FileText size={16} className="text-brand-primary" />
+          <div className="p-3">
+            {/* Header: 团体项目+代码+场次+比赛项目, 组别 */}
+            <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+              <h3 className="text-xs font-bold text-slate-800">
+                {match.category}{match.id}{match.matchNum}{match.subCategory}
+              </h3>
+              <span className="text-xs font-bold text-slate-800 mr-12">{match.groupInfo}</span>
+            </div>
+
+            {/* Sub-header: Date, Time, Court, Match Num */}
+            <div className="flex justify-center gap-4 text-[10px] text-slate-400 mb-4">
+              <span>{match.date.replace('8/', '1月')}</span>
+              <span>{match.time}</span>
+              <span>{match.court}</span>
+              <span>{match.matchNum}</span>
+            </div>
+
+            {/* Teams Section */}
+            <div className="bg-brand-primary/5 rounded-sm p-4">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-slate-700 flex-1 text-center">{match.team1}</span>
+                <div className="text-brand-primary text-xs font-bold mx-4 min-w-[40px] text-center">
+                  VS
+                </div>
+                <span className="text-xs font-bold text-slate-700 flex-1 text-center">{match.team2}</span>
+              </div>
+
+              {/* Inner Match Box */}
+              <div className="bg-white border border-brand-primary/20 rounded-sm p-3 relative">
+                <div className="grid grid-cols-[1fr_70px_1fr] items-center gap-2">
+                  {/* Side 1 Pos */}
+                  <div className="text-center text-[10px] text-slate-400">{match.pos1}</div>
+                  {/* Set Score */}
+                  <div className="bg-brand-primary/10 text-brand-primary py-1 rounded-sm text-xs font-bold text-center">
+                    {match.setScore1}:{match.setScore2}
                   </div>
-                  <span className="text-xs font-black text-slate-600">检录</span>
+                  {/* Side 2 Pos */}
+                  <div className="text-center text-[10px] text-slate-400 relative">
+                    {match.pos2}
+                    {isFinished && match.winner === 2 && (
+                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold">胜</div>
+                    )}
+                  </div>
+
+                  {/* Side 1 Players Top */}
+                  <div className="text-center text-[11px] font-medium text-slate-600 relative">
+                    {isFinished && match.winner === 1 && (
+                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold">胜</div>
+                    )}
+                    {match.player1}
+                  </div>
+                  {/* Spacer */}
+                  <div />
+                  {/* Side 2 Players Top */}
+                  <div className="text-center text-[11px] font-medium text-slate-600">{match.player2}</div>
+
+                  {/* Side 1 Players Bottom */}
+                  <div className="text-center text-[11px] font-medium text-slate-600">{match.player1_2}</div>
+                  {/* Point Score */}
+                  <div className="bg-brand-primary/5 text-brand-primary py-2 rounded-sm text-sm font-bold text-center">
+                    {match.score1}:{match.score2}
+                  </div>
+                  {/* Side 2 Players Bottom */}
+                  <div className="text-center text-[11px] font-medium text-slate-600">{match.player2_2}</div>
+                  
+                  {/* Match Timing Info */}
+                  <div className="col-span-3 mt-2 pt-2 border-t border-slate-50 flex justify-center gap-3 text-[9px] text-slate-400">
+                    {match.duration && <span>用时: {match.duration}</span>}
+                    {match.startTime && <span>开始: {match.startTime}</span>}
+                    {match.endTime && <span>结束: {match.endTime}</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Check-in Section */}
+            {!isFinished && (
+              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">检录时间</span>
+                  <span className="text-xs font-black text-brand-primary">{checkInTimeStr}</span>
                 </div>
                 {isUpcoming ? (
                   <button 
@@ -9555,16 +9562,137 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                       title: '检录二维码',
                       subtitle: `${match.category} • ${match.groupInfo}`
                     })}
-                    className="px-4 py-1.5 bg-brand-primary text-white rounded-xl text-[10px] font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
+                    className="px-6 py-2 bg-brand-primary text-white rounded-lg text-xs font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
                   >
                     去检录
                   </button>
                 ) : (
-                  <div className="px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-lg text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                  <div className="px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-lg text-xs font-black text-emerald-600 uppercase tracking-widest">
                     已检录
                   </div>
                 )}
               </div>
+            )}
+          </div>
+        </motion.div>
+      );
+    }
+
+    return (
+      <motion.div 
+        layout
+        key={match.id}
+        className="bg-white rounded-2xl border border-brand-primary/30 ring-1 ring-brand-primary/10 transition-all card-shadow relative overflow-hidden mb-4"
+      >
+        {/* Status Ribbon */}
+        <div className={cn(
+          "absolute top-0 right-0 px-6 py-1 translate-x-[25%] translate-y-[25%] rotate-45 text-[10px] font-black text-white z-10",
+          isFinished ? "bg-brand-primary" : (isOngoing ? "bg-red-500" : "bg-slate-400")
+        )}>
+          {isFinished ? '已结束' : (isOngoing ? '比赛中' : '待开始')}
+        </div>
+
+        <div className="p-4">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-4 pr-12">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-black text-slate-800">{match.category}{match.id}</h3>
+                <span className="bg-brand-primary/10 text-brand-primary text-[8px] px-1.5 py-0.5 rounded font-black uppercase">我的比赛</span>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 mt-0.5">{match.groupInfo}</p>
+            </div>
+          </div>
+
+          {/* Info Row */}
+          <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-4 pb-4 border-b border-slate-50">
+            <div className="flex items-center gap-1">
+              <Calendar size={12} className="text-slate-300" />
+              <span>{match.date}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock size={12} className="text-slate-300" />
+              <span>{match.time}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <MapPin size={12} className="text-slate-300" />
+              <span>{match.court}</span>
+            </div>
+          </div>
+
+          {/* Matchup Area */}
+          <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex items-center justify-between gap-2">
+            {/* Player 1 */}
+            <div className="flex-1 flex flex-col items-center">
+              <div className="relative">
+                <img 
+                  src={`https://picsum.photos/seed/${match.player1}/100/100`} 
+                  alt={match.player1} 
+                  className="w-12 h-12 rounded-full border-2 border-white shadow-sm mb-2"
+                  referrerPolicy="no-referrer"
+                />
+                {isFinished && match.winner === 1 && (
+                  <div className="absolute -top-1 -left-1 w-6 h-6 bg-brand-primary text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
+                    胜
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 mb-0.5">{match.pos1}</span>
+              <span className="text-xs font-black text-slate-800">{match.player1}</span>
+            </div>
+
+            {/* Score */}
+            <div className="flex flex-col items-center gap-1 min-w-[80px]">
+              <div className="bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-lg text-sm font-black tracking-tighter">
+                {`${match.setScore1} : ${match.setScore2}`}
+              </div>
+              <div className="bg-white border border-brand-primary/20 text-brand-primary px-3 py-0.5 rounded-lg text-[10px] font-black">
+                {`${match.score1} : ${match.score2}`}
+              </div>
+            </div>
+
+            {/* Player 2 */}
+            <div className="flex-1 flex flex-col items-center">
+              <div className="relative">
+                <img 
+                  src={`https://picsum.photos/seed/${match.player2}/100/100`} 
+                  alt={match.player2} 
+                  className="w-12 h-12 rounded-full border-2 border-white shadow-sm mb-2"
+                  referrerPolicy="no-referrer"
+                />
+                {isFinished && match.winner === 2 && (
+                  <div className="absolute -top-1 -left-1 w-6 h-6 bg-brand-primary text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
+                    胜
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 mb-0.5">{match.pos2}</span>
+              <span className="text-xs font-black text-slate-800">{match.player2}</span>
+            </div>
+          </div>
+
+          {/* Check-in Section */}
+          {!isFinished && (
+            <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">检录时间</span>
+                <span className="text-xs font-black text-brand-primary">{checkInTimeStr}</span>
+              </div>
+              {isUpcoming ? (
+                <button 
+                  onClick={() => setCheckInQRData({
+                    title: '检录二维码',
+                    subtitle: `${match.category} • ${match.groupInfo}`
+                  })}
+                  className="px-6 py-2 bg-brand-primary text-white rounded-lg text-xs font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
+                >
+                  去检录
+                </button>
+              ) : (
+                <div className="px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-lg text-xs font-black text-emerald-600 uppercase tracking-widest">
+                  已检录
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -9586,7 +9714,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
           {/* Status Ribbon */}
           <div className={cn(
             "absolute top-0 right-0 px-8 py-1 translate-x-[30%] translate-y-[30%] rotate-45 text-[10px] font-black text-white z-10",
-            isFinished ? "bg-orange-500" : (isOngoing ? "bg-red-500" : "bg-slate-400")
+            isFinished ? "bg-brand-primary" : (isOngoing ? "bg-red-500" : "bg-slate-400")
           )}>
             {isFinished ? '已结束' : (isOngoing ? '比赛中' : '待开始')}
           </div>
@@ -9615,36 +9743,36 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
             </div>
 
             {/* Teams Section */}
-            <div className="bg-orange-50/30 rounded-sm p-4">
+            <div className="bg-brand-primary/5 rounded-sm p-4">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold text-slate-700 flex-1 text-center">{match.team1}</span>
-                <div className="text-orange-400 text-xs font-bold mx-4 min-w-[40px] text-center">
+                <div className="text-brand-primary text-xs font-bold mx-4 min-w-[40px] text-center">
                   VS
                 </div>
                 <span className="text-xs font-bold text-slate-700 flex-1 text-center">{match.team2}</span>
               </div>
 
               {/* Inner Match Box */}
-              <div className="bg-white border border-orange-100 rounded-sm p-3 relative">
+              <div className="bg-white border border-brand-primary/20 rounded-sm p-3 relative">
                 <div className="grid grid-cols-[1fr_70px_1fr] items-center gap-2">
                   {/* Side 1 Pos */}
                   <div className="text-center text-[10px] text-slate-400">{match.pos1}</div>
                   {/* Set Score */}
-                  <div className="bg-orange-100/50 text-orange-600 py-1 rounded-sm text-xs font-bold text-center">
+                  <div className="bg-brand-primary/10 text-brand-primary py-1 rounded-sm text-xs font-bold text-center">
                     {match.setScore1}:{match.setScore2}
                   </div>
                   {/* Side 2 Pos */}
                   <div className="text-center text-[10px] text-slate-400 relative">
                     {match.pos2}
                     {isFinished && match.winner === 2 && (
-                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 bg-orange-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold">胜</div>
+                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold">胜</div>
                     )}
                   </div>
 
                   {/* Side 1 Players Top */}
                   <div className="text-center text-[11px] font-medium text-slate-600 relative">
                     {isFinished && match.winner === 1 && (
-                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 bg-orange-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold">胜</div>
+                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold">胜</div>
                     )}
                     {match.player1}
                   </div>
@@ -9656,7 +9784,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                   {/* Side 1 Players Bottom */}
                   <div className="text-center text-[11px] font-medium text-slate-600">{match.player1_2}</div>
                   {/* Point Score */}
-                  <div className="bg-orange-100/30 text-orange-400 py-2 rounded-sm text-sm font-bold text-center">
+                  <div className="bg-brand-primary/5 text-brand-primary py-2 rounded-sm text-sm font-bold text-center">
                     {match.score1}:{match.score2}
                   </div>
                   {/* Side 2 Players Bottom */}
@@ -9746,7 +9874,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                 referrerPolicy="no-referrer"
               />
               {(match.status === 'finished' || match.status === 'walkover') && match.winner === 1 && (
-                <div className="absolute -top-1 -left-1 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
+                <div className="absolute -top-1 -left-1 w-6 h-6 bg-brand-primary text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
                   胜
                 </div>
               )}
@@ -9762,10 +9890,10 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
 
           {/* Score */}
           <div className="flex flex-col items-center gap-1 min-w-[80px]">
-            <div className="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg text-sm font-black tracking-tighter">
+            <div className="bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-lg text-sm font-black tracking-tighter">
               {`${match.setScore1} : ${match.setScore2}`}
             </div>
-            <div className="bg-white border border-orange-100 text-orange-400 px-3 py-0.5 rounded-lg text-[10px] font-black">
+            <div className="bg-white border border-brand-primary/20 text-brand-primary px-3 py-0.5 rounded-lg text-[10px] font-black">
               {`${match.score1} : ${match.score2}`}
             </div>
           </div>
@@ -9780,7 +9908,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                 referrerPolicy="no-referrer"
               />
               {(match.status === 'finished' || match.status === 'walkover') && match.winner === 2 && (
-                <div className="absolute -top-1 -left-1 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
+                <div className="absolute -top-1 -left-1 w-6 h-6 bg-brand-primary text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
                   胜
                 </div>
               )}
@@ -10184,7 +10312,10 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                           </span>
                         </div>
                       <button 
-                        onClick={() => setShowRoundTable(true)}
+                        onClick={() => {
+                          setSelectedSubGroup(subGroup);
+                          setShowRoundTable(true);
+                        }}
                         className="text-[11px] font-bold text-brand-primary hover:opacity-80 transition-all flex items-center gap-0.5"
                       >
                         对阵详情 <ChevronRight size={12} />
@@ -10751,7 +10882,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
               className="bg-slate-50 w-full max-w-sm rounded-[40px] overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]"
             >
               <div className="p-8 bg-white border-b border-slate-100">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-6">
                   <div>
                     <h3 className="text-xl font-black text-slate-900 tracking-tight">小组对阵轮次表</h3>
                     <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
@@ -10762,10 +10893,50 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                     <X size={20} />
                   </button>
                 </div>
+
+                {/* Round Switcher */}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                  {['第1轮', '第2轮', '第3轮'].map((round, i) => (
+                    <button
+                      key={round}
+                      onClick={() => setActiveRoundTab(i)}
+                      className={cn(
+                        "px-6 py-2 rounded-xl text-xs font-black transition-all border whitespace-nowrap",
+                        activeRoundTab === i 
+                          ? "bg-brand-primary text-white border-brand-primary shadow-md" 
+                          : "bg-white text-slate-400 border-slate-100"
+                      )}
+                    >
+                      {round}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8">
-                {[
+                {(tournament.id === '2' ? [
+                  { 
+                    round: '第1轮', 
+                    matches: [
+                      {team1: '翔骏羽队', team2: '友巨集团', score: '3:2', status: 'finished', winner: 1, category: '男团', id: '1001', matchNum: '第1场', subCategory: '单打', player1: '张伟', player2: '李强', setScore1: 2, setScore2: 1, score1: 21, score2: 18, date: '8/15', time: '09:00', court: '场地1', groupInfo: `${selectedSubGroup.replace('第', '')}第1轮`, pos1: '1组1', pos2: '1组2'}, 
+                      {team1: '厦门大学', team2: '集美大学', score: '4:1', status: 'finished', winner: 1, category: '男团', id: '1002', matchNum: '第2场', subCategory: '单打', player1: '王五', player2: '赵六', setScore1: 2, setScore2: 0, score1: 21, score2: 15, date: '8/15', time: '09:15', court: '场地2', groupInfo: `${selectedSubGroup.replace('第', '')}第1轮`, pos1: '1组3', pos2: '1组4'}
+                    ] 
+                  },
+                  { 
+                    round: '第2轮', 
+                    matches: [
+                      {team1: '翔骏羽队', team2: '厦门大学', score: '3:2', status: 'finished', winner: 1, category: '男团', id: '2001', matchNum: '第1场', subCategory: '单打', player1: '张伟', player2: '王五', setScore1: 2, setScore2: 1, score1: 21, score2: 19, date: '8/15', time: '14:00', court: '场地1', groupInfo: `${selectedSubGroup.replace('第', '')}第2轮`, pos1: '1组1', pos2: '1组3'}, 
+                      {team1: '友巨集团', team2: '集美大学', score: '5:0', status: 'finished', winner: 1, category: '男团', id: '2002', matchNum: '第2场', subCategory: '单打', player1: '李强', player2: '赵六', setScore1: 2, setScore2: 0, score1: 21, score2: 12, date: '8/15', time: '14:15', court: '场地2', groupInfo: `${selectedSubGroup.replace('第', '')}第2轮`, pos1: '1组2', pos2: '1组4'}
+                    ] 
+                  },
+                  { 
+                    round: '第3轮', 
+                    matches: [
+                      {team1: '翔骏羽队', team2: '集美大学', score: '0:0', status: 'upcoming', winner: 0, category: '男团', id: '3001', matchNum: '第1场', subCategory: '单打', player1: '张伟', player2: '赵六', setScore1: 0, setScore2: 0, score1: 0, score2: 0, date: '8/16', time: '09:00', court: '场地1', groupInfo: `${selectedSubGroup.replace('第', '')}第3轮`, pos1: '1组1', pos2: '1组4'}, 
+                      {team1: '友巨集团', team2: '厦门大学', score: '0:0', status: 'upcoming', winner: 0, category: '男团', id: '3002', matchNum: '第2场', subCategory: '单打', player1: '李强', player2: '王五', setScore1: 0, setScore2: 0, score1: 0, score2: 0, date: '8/16', time: '09:15', court: '场地2', groupInfo: `${selectedSubGroup.replace('第', '')}第3轮`, pos1: '1组2', pos2: '1组3'}
+                    ] 
+                  },
+                ] : [
                   { 
                     round: '第1轮', 
                     matches: [
@@ -10787,7 +10958,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                       {p1: '安塞龙', p2: '李宗伟', score: '0:0', status: 'upcoming', winner: 0}
                     ] 
                   },
-                ].map((r, idx) => (
+                ]).filter((_, i) => i === activeRoundTab).map((r, idx) => (
                   <div key={idx} className="space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-xl bg-brand-primary flex items-center justify-center text-white text-xs font-black shadow-lg shadow-brand-primary/20">
@@ -10796,38 +10967,125 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                       <span className="text-sm font-black text-slate-800">{r.round}</span>
                     </div>
                     <div className="space-y-3">
-                      {r.matches.map((m, mIdx) => (
-                        <div key={mIdx} className="bg-white rounded-2xl p-4 border border-slate-100 card-shadow flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1 flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
-                                {m.p1[0]}
+                      {r.matches.map((m: any, mIdx) => {
+                        if (tournament.id === '2') {
+                          const isFinished = m.status === 'finished' || m.status === 'walkover';
+                          const isOngoing = m.status === 'ongoing';
+                          
+                          return (
+                            <div 
+                              key={mIdx}
+                              className="bg-white rounded-sm border border-slate-200 transition-all shadow-sm relative overflow-hidden mb-4 text-left"
+                            >
+                              {/* Status Ribbon */}
+                              <div className={cn(
+                                "absolute top-0 right-0 px-8 py-1 translate-x-[30%] translate-y-[30%] rotate-45 text-[10px] font-black text-white z-10",
+                                isFinished ? "bg-brand-primary" : (isOngoing ? "bg-red-500" : "bg-slate-400")
+                              )}>
+                                {isFinished ? '已结束' : (isOngoing ? '比赛中' : '待开始')}
                               </div>
-                              <span className={cn("text-xs font-black", m.winner === 1 ? "text-slate-900" : "text-slate-400")}>{m.p1}</span>
-                            </div>
-                            <div className="px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-black text-slate-300 italic">VS</div>
-                            <div className="flex-1 flex items-center justify-end gap-3">
-                              <span className={cn("text-xs font-black", m.winner === 2 ? "text-slate-900" : "text-slate-400")}>{m.p2}</span>
-                              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
-                                {m.p2[0]}
+
+                              <div className="p-3">
+                                {/* Header: 团体项目+代码+场次+比赛项目, 组别 */}
+                                <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+                                  <h3 className="text-xs font-bold text-slate-800">
+                                    {m.category}{m.id}{m.matchNum}{m.subCategory}
+                                  </h3>
+                                  <span className="text-xs font-bold text-slate-800 mr-12">{m.groupInfo}</span>
+                                </div>
+
+                                {/* Sub-header: Date, Time, Court, Match Num */}
+                                <div className="flex justify-center gap-4 text-[10px] text-slate-400 mb-4">
+                                  <span>{m.date.replace('8/', '1月')}</span>
+                                  <span>{m.time}</span>
+                                  <span>{m.court}</span>
+                                  <span>{m.matchNum}</span>
+                                </div>
+
+                                {/* Teams Section */}
+                                <div className="bg-brand-primary/5 rounded-sm p-4">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <span className="text-xs font-bold text-slate-700 flex-1 text-center">{m.team1}</span>
+                                    <div className="text-brand-primary text-xs font-bold mx-4 min-w-[40px] text-center">
+                                      VS
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-700 flex-1 text-center">{m.team2}</span>
+                                  </div>
+
+                                  {/* Inner Match Box */}
+                                  <div className="bg-white border border-brand-primary/20 rounded-sm p-3 relative">
+                                    <div className="grid grid-cols-[1fr_70px_1fr] items-center gap-2">
+                                      {/* Side 1 Pos */}
+                                      <div className="text-center text-[10px] text-slate-400">{m.pos1}</div>
+                                      {/* Set Score */}
+                                      <div className="bg-brand-primary/10 text-brand-primary py-1 rounded-sm text-xs font-bold text-center">
+                                        {m.setScore1}:{m.setScore2}
+                                      </div>
+                                      {/* Side 2 Pos */}
+                                      <div className="text-center text-[10px] text-slate-400 relative">
+                                        {m.pos2}
+                                        {isFinished && m.winner === 2 && (
+                                          <div className="absolute -right-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold">胜</div>
+                                        )}
+                                      </div>
+
+                                      {/* Side 1 Players Top */}
+                                      <div className="text-center text-[11px] font-medium text-slate-600 relative">
+                                        {isFinished && m.winner === 1 && (
+                                          <div className="absolute -left-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold">胜</div>
+                                        )}
+                                        {m.player1}
+                                      </div>
+                                      {/* Spacer */}
+                                      <div />
+                                      {/* Side 2 Players Top */}
+                                      <div className="text-center text-[11px] font-medium text-slate-600">{m.player2}</div>
+
+                                      {/* Point Score */}
+                                      <div className="col-span-3 bg-brand-primary/5 text-brand-primary py-2 rounded-sm text-sm font-bold text-center">
+                                        {m.score1}:{m.score2}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
+                          );
+                        }
+
+                        return (
+                          <div key={mIdx} className="bg-white rounded-2xl p-4 border border-slate-100 card-shadow flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
+                                  {m.p1[0]}
+                                </div>
+                                <span className={cn("text-xs font-black", m.winner === 1 ? "text-slate-900" : "text-slate-400")}>{m.p1}</span>
+                              </div>
+                              <div className="px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-black text-slate-300 italic">VS</div>
+                              <div className="flex-1 flex items-center justify-end gap-3">
+                                <span className={cn("text-xs font-black", m.winner === 2 ? "text-slate-900" : "text-slate-400")}>{m.p2}</span>
+                                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
+                                  {m.p2[0]}
+                                </div>
+                              </div>
+                            </div>
+                            {m.status === 'finished' ? (
+                              <div className="pt-3 border-t border-slate-50 flex justify-center">
+                                <div className="bg-brand-primary/5 text-brand-primary px-4 py-1.5 rounded-xl text-xs font-black tabular-nums tracking-widest">
+                                  {m.score}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="pt-3 border-t border-slate-50 flex justify-center">
+                                <div className="bg-slate-50 text-slate-300 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                                  待开始
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {m.status === 'finished' ? (
-                            <div className="pt-3 border-t border-slate-50 flex justify-center">
-                              <div className="bg-brand-primary/5 text-brand-primary px-4 py-1.5 rounded-xl text-xs font-black tabular-nums tracking-widest">
-                                {m.score}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="pt-3 border-t border-slate-50 flex justify-center">
-                              <div className="bg-slate-50 text-slate-300 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                                待开始
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
@@ -10836,7 +11094,8 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
               <div className="p-8 bg-white border-t border-slate-100">
                 <button 
                   onClick={() => setShowRoundTable(false)}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
+                  className="w-full py-4 text-white rounded-2xl font-black text-sm shadow-xl shadow-emerald-900/10 active:scale-95 transition-all"
+                  style={{ backgroundColor: '#1FC47F' }}
                 >
                   返回小组榜单
                 </button>
