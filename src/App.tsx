@@ -44,6 +44,7 @@ import {
   Flame,
   Medal,
   Target,
+  Shield,
   Navigation,
   PhoneCall,
   Map as MapIcon,
@@ -2817,15 +2818,1012 @@ const ParticipantsPage = ({
   );
 };
 
+const LeaderManagementPage = ({ 
+  onBack, 
+  initialTab = 'registering',
+  initialSelectedMatchId,
+  onSelectTournament
+}: { 
+  onBack: () => void,
+  initialTab?: 'registering' | 'ongoing',
+  initialSelectedMatchId?: string,
+  onSelectTournament?: (tournament: Tournament) => void
+}) => {
+  const [activeTab, setActiveTab] = useState<'registering' | 'ongoing'>(initialTab);
+  const [selectedMatch, setSelectedMatch] = useState<any | null>(null);
+  const [lineup, setLineup] = useState<any[]>([]);
+  const [showInviteQR, setShowInviteQR] = useState(false);
+  const [detailTab, setDetailTab] = useState<'lineup' | 'schedule'>('lineup');
+  const [showTeamMembers, setShowTeamMembers] = useState(false);
+  const [showTransferPermission, setShowTransferPermission] = useState(false);
+  const [transferSearch, setTransferSearch] = useState('');
+
+  const registeringMatches = [
+    {
+      id: 'L1',
+      title: '2026年厦门市全民健身运动会羽毛球赛（同安站）',
+      status: 'registration',
+      deadline: '2026-05-10',
+      teamName: '雷霆一队',
+      leaderName: '郭靖',
+      image: 'https://picsum.photos/seed/badminton1/800/400',
+      location: '同安体育馆',
+      matchStartTime: '2026-05-20 09:00',
+      participants: 120,
+      maxParticipants: 200,
+      regEndTime: '2026-05-10 18:00',
+      type: 'Individual',
+      categories: [
+        {
+          name: 'B组男单',
+          players: [
+            { name: '郭靖', status: '已报名', avatar: 'https://picsum.photos/seed/user1/100/100' },
+            { name: '杨过', status: '已报名', avatar: 'https://picsum.photos/seed/user3/100/100' }
+          ]
+        },
+        {
+          name: 'B组男双',
+          players: [
+            { name: '郭靖/杨过', status: '已报名', avatar: 'https://picsum.photos/seed/user1/100/100' },
+            { name: '乔峰/令狐冲', status: '已报名', avatar: 'https://picsum.photos/seed/user5/100/100' }
+          ]
+        },
+        {
+          name: 'A组女双',
+          players: [
+            { name: '黄蓉/小龙女', status: '已报名', avatar: 'https://picsum.photos/seed/user2/100/100' }
+          ]
+        },
+        {
+          name: 'A组混双',
+          players: [
+            { name: '郭靖/黄蓉', status: '已报名', avatar: 'https://picsum.photos/seed/user1/100/100' },
+            { name: '杨过/小龙女', status: '已报名', avatar: 'https://picsum.photos/seed/user3/100/100' }
+          ]
+        }
+      ],
+      members: [
+        { name: '郭靖', role: '领队', status: '已报名', avatar: 'https://picsum.photos/seed/user1/100/100' },
+        { name: '黄蓉', role: '队员', status: '已报名', avatar: 'https://picsum.photos/seed/user2/100/100' },
+        { name: '杨过', role: '队员', status: '已报名', avatar: 'https://picsum.photos/seed/user3/100/100' },
+        { name: '小龙女', role: '队员', status: '已报名', avatar: 'https://picsum.photos/seed/user4/100/100' },
+        { name: '乔峰', role: '队员', status: '已报名', avatar: 'https://picsum.photos/seed/user5/100/100' },
+        { name: '令狐冲', role: '队员', status: '已报名', avatar: 'https://picsum.photos/seed/user6/100/100' },
+      ],
+      registeredCount: '7'
+    }
+  ];
+
+  const ongoingMatches = [
+    {
+      id: 'L2',
+      title: '2026 "羽协杯" 业余羽毛球公开赛',
+      status: 'ongoing',
+      type: 'Individual',
+      teamName: '雷霆羽球社',
+      leaderName: '郭靖',
+      image: 'https://picsum.photos/seed/badminton2/800/400',
+      location: '厦门市体育中心',
+      matchStartTime: '2026-08-15 09:00',
+      matches: [
+        { 
+          id: 'M1',
+          category: '男单A组', 
+          groupInfo: '小组赛 第1轮',
+          player1: '郭靖', 
+          player2: '张三', 
+          score1: 21,
+          score2: 18,
+          setScore1: 2,
+          setScore2: 0,
+          status: 'finished',
+          winner: 1,
+          time: '09:00',
+          date: '8/15',
+          court: '1号场'
+        },
+        { 
+          id: 'M2',
+          category: '女单B组', 
+          groupInfo: '小组赛 第1轮',
+          player1: '黄蓉', 
+          player2: '李四', 
+          score1: 15,
+          score2: 21,
+          setScore1: 0,
+          setScore2: 2,
+          status: 'finished',
+          winner: 2,
+          time: '09:30',
+          date: '8/15',
+          court: '2号场'
+        },
+        { 
+          id: 'M3',
+          category: '男双A组', 
+          groupInfo: '小组赛 第2轮',
+          player1: '郭靖', 
+          player1_2: '杨过',
+          player2: '王五', 
+          player2_2: '赵六',
+          score1: 12,
+          score2: 8,
+          setScore1: 0,
+          setScore2: 0,
+          status: 'ongoing',
+          time: '10:00',
+          date: '8/15',
+          court: '1号场'
+        },
+        { 
+          id: 'M4',
+          category: '男单A组', 
+          groupInfo: '小组赛 第3轮',
+          player1: '郭靖', 
+          player2: '赵敏', 
+          status: 'upcoming',
+          time: '11:00',
+          date: '8/15',
+          court: '3号场'
+        },
+      ]
+    },
+    {
+      id: 'L3',
+      title: '2026 春季高校羽毛球联赛 - 厦门站',
+      status: 'ongoing',
+      type: 'Team',
+      teamName: '厦大校友队',
+      leaderName: '郭靖',
+      image: 'https://picsum.photos/seed/badminton3/800/400',
+      location: '思明体育馆',
+      matchStartTime: '2026-04-10 14:00',
+      nextMatch: {
+        opponent: '集大校友队',
+        time: '今日 14:00',
+        court: '3号场'
+      },
+      lineupSlots: [
+        { order: '男单', players: [''] },
+        { order: '男双', players: ['', ''] },
+        { order: '女单', players: [''] },
+        { order: '女双', players: ['', ''] },
+        { order: '混双', players: ['', ''] },
+      ],
+      availablePlayers: ['郭靖', '杨过', '张无忌', '令狐冲', '乔峰', '段誉', '虚竹'],
+      teamMatches: [
+        { 
+          id: 'TM1',
+          category: '混合团体', 
+          groupInfo: '小组赛 第1轮',
+          opponent: '集大校友队',
+          status: 'finished',
+          score: '3 : 2',
+          result: '胜',
+          time: '09:00',
+          date: '4/10',
+          court: '1号场',
+          lineupStatus: 'submitted'
+        },
+        { 
+          id: 'TM2',
+          category: '混合团体', 
+          groupInfo: '小组赛 第2轮',
+          opponent: '华大校友队',
+          status: 'ongoing',
+          score: '1 : 1',
+          time: '14:00',
+          date: '4/10',
+          court: '3号场',
+          lineupStatus: 'submitted'
+        },
+        { 
+          id: 'TM3',
+          category: '混合团体', 
+          groupInfo: '小组赛 第3轮',
+          opponent: '理工校友队',
+          status: 'upcoming',
+          time: '16:30',
+          date: '4/10',
+          court: '2号场',
+          lineupStatus: 'not_submitted'
+        },
+      ]
+    }
+  ];
+
+  useEffect(() => {
+    if (selectedMatch?.id === 'L3') {
+      setLineup(selectedMatch.lineupSlots);
+    }
+  }, [selectedMatch]);
+
+  useEffect(() => {
+    if (initialSelectedMatchId) {
+      const match = [...registeringMatches, ...ongoingMatches].find(m => m.id === initialSelectedMatchId);
+      if (match) {
+        setSelectedMatch(match);
+      }
+    } else if (initialTab === 'registering' && registeringMatches.length > 0) {
+      // Direct navigation to first registering match if requested
+      setSelectedMatch(registeringMatches[0]);
+    } else if (initialTab === 'ongoing' && ongoingMatches.length > 0) {
+      // Direct navigation to specific ongoing match if requested
+      const targetMatch = ongoingMatches.find(m => m.id === 'L2') || ongoingMatches[0];
+      setSelectedMatch(targetMatch);
+      setDetailTab('schedule');
+    }
+  }, [initialSelectedMatchId]);
+
+  if (selectedMatch) {
+    return (
+      <div className="pb-20 bg-slate-50 min-h-screen">
+        <header className="bg-white px-4 pt-12 pb-4 flex items-center gap-4 border-b border-slate-100 sticky top-0 z-50 w-full max-w-md">
+          <button onClick={() => setSelectedMatch(null)} className="p-2 rounded-full hover:bg-slate-100">
+            <ChevronRight size={20} className="rotate-180" />
+          </button>
+          <h1 className="text-lg font-bold truncate pr-4">{selectedMatch.title}</h1>
+        </header>
+
+        <div className="p-4 space-y-4">
+          {/* Scenario 1: Registration Detail */}
+          {selectedMatch.id === 'L1' && (
+            <div className="space-y-4">
+              <div className="bg-white p-6 rounded-[32px] border border-slate-100 card-shadow">
+                <div className="flex justify-between items-start mb-6">
+                  <div className="space-y-1">
+                    <h3 className="text-base font-black text-slate-900 leading-tight">{selectedMatch.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-brand-primary bg-brand-primary/5 px-2 py-0.5 rounded uppercase tracking-widest">报名中</span>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">截止: {selectedMatch.deadline}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-y-4 py-4 border-y border-slate-50">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">队伍名称</p>
+                    <p className="text-sm font-black text-slate-900">{selectedMatch.teamName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">领队姓名</p>
+                    <p className="text-sm font-black text-slate-900">{selectedMatch.leaderName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">已报组别数</p>
+                    <p className="text-sm font-black text-brand-primary">{selectedMatch.categories?.length || 0} 个项目</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">已报人数</p>
+                    <p className="text-sm font-black text-slate-900">{selectedMatch.registeredCount} 人</p>
+                  </div>
+                </div>
+                
+                <div className="mt-6 space-y-6">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">各组别报名详情</p>
+                  <div className="space-y-4">
+                    {selectedMatch.categories?.map((cat: any, cIdx: number) => (
+                      <div key={cIdx} className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-1 h-3 bg-brand-primary rounded-full" />
+                          <span className="text-xs font-black text-slate-900">{cat.name}</span>
+                          <span className="text-[9px] font-bold text-slate-400 ml-auto">已报 {cat.players.length} {cat.name.includes('单') ? '人' : '对'}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {cat.players.map((player: any, pIdx: number) => (
+                            <div key={pIdx} className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm">
+                              <div className="w-5 h-5 rounded-full overflow-hidden">
+                                <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-700">{player.name}</span>
+                              <Check size={10} className="text-emerald-500" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-8">
+                  <button 
+                    onClick={() => setShowInviteQR(true)}
+                    className="py-4 bg-brand-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-brand-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} strokeWidth={3} />
+                    <span>邀请更多队员</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (onSelectTournament) {
+                        const t = MOCK_TOURNAMENTS.find(t => t.title.includes('全民健身运动会'));
+                        if (t) onSelectTournament(t);
+                      } else {
+                        alert('正在跳转赛事详情...');
+                      }
+                    }}
+                    className="py-4 bg-slate-100 text-slate-600 rounded-2xl text-xs font-black active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <FileText size={16} strokeWidth={3} />
+                    <span>查看赛事详情</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Invitation QR Modal */}
+              <AnimatePresence>
+                {showInviteQR && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="bg-white w-full max-w-xs rounded-[40px] p-8 flex flex-col items-center text-center relative"
+                    >
+                      <button 
+                        onClick={() => setShowInviteQR(false)}
+                        className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 transition-colors"
+                      >
+                        <X size={20} />
+                      </button>
+                      
+                      <div className="w-16 h-16 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-brand-primary mb-6">
+                        <Users size={32} />
+                      </div>
+                      
+                      <h3 className="text-lg font-black text-slate-900 mb-2">邀请队员加入</h3>
+                      <p className="text-xs text-slate-400 font-bold mb-8">扫描二维码加入“{selectedMatch.teamName}”</p>
+                      
+                      <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 mb-8">
+                        <QrCode size={180} className="text-slate-900" />
+                      </div>
+                      
+                      <button 
+                        onClick={() => setShowInviteQR(false)}
+                        className="w-full py-4 bg-slate-900 text-white rounded-2xl text-sm font-black shadow-xl"
+                      >
+                        完成
+                      </button>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Scenario 2: Individual Competition Ongoing */}
+          {selectedMatch.id === 'L2' && (
+            <div className="space-y-4">
+              {/* Header Info */}
+              <div className="bg-white p-6 rounded-[32px] border border-slate-100 card-shadow">
+                <h2 className="text-lg font-black text-slate-900 leading-tight mb-4">{selectedMatch.title}</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">队伍名称</p>
+                    <p className="text-sm font-black text-slate-900">{selectedMatch.teamName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">领队姓名</p>
+                    <p className="text-sm font-black text-slate-900">{selectedMatch.leaderName}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Summary */}
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: '总场次', value: selectedMatch.matches.length, color: 'text-slate-900' },
+                  { label: '参赛中', value: selectedMatch.matches.filter((m: any) => m.status === 'ongoing').length, color: 'text-brand-primary' },
+                  { label: '待开始', value: selectedMatch.matches.filter((m: any) => m.status === 'upcoming').length, color: 'text-amber-500' },
+                  { label: '已结束', value: selectedMatch.matches.filter((m: any) => m.status === 'finished').length, color: 'text-slate-400' },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
+                    <div className={cn("text-lg font-black", stat.color)}>{stat.value}</div>
+                    <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest px-2">队伍全部比赛</h3>
+                {selectedMatch.matches.map((match: any) => {
+                  const isFinished = match.status === 'finished';
+                  const isOngoing = match.status === 'ongoing';
+                  const isUpcoming = match.status === 'upcoming';
+
+                  return (
+                    <motion.div 
+                      layout
+                      key={match.id}
+                      className="bg-white rounded-[32px] border border-slate-100 overflow-hidden card-shadow relative"
+                    >
+                      {/* Status Ribbon */}
+                      <div className={cn(
+                        "absolute top-0 right-0 px-6 py-1 translate-x-[25%] translate-y-[25%] rotate-45 text-[10px] font-black text-white z-10",
+                        isFinished ? "bg-brand-primary" : (isOngoing ? "bg-red-500" : "bg-slate-400")
+                      )}>
+                        {isFinished ? '已结束' : (isOngoing ? '比赛中' : '待开始')}
+                      </div>
+
+                      <div className="p-6">
+                        {/* Header */}
+                        <div className="flex justify-between items-start mb-4 pr-12">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-black text-slate-800">{match.category}</h3>
+                              <span className="bg-brand-primary/10 text-brand-primary text-[8px] px-1.5 py-0.5 rounded font-black uppercase">我的队伍</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-400 mt-0.5">{match.groupInfo}</p>
+                          </div>
+                        </div>
+
+                        {/* Info Row */}
+                        <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-4 pb-4 border-b border-slate-50">
+                          <div className="flex items-center gap-1">
+                            <Calendar size={12} className="text-slate-300" />
+                            <span>{match.date}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <FileText size={12} className="text-slate-300" />
+                            <span className="text-brand-primary">
+                              {(() => {
+                                const [h, m] = match.time.split(':').map(Number);
+                                const total = h * 60 + m;
+                                const format = (t: number) => `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`;
+                                return `${format(total - 30)}-${format(total - 15)}`;
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock size={12} className="text-slate-300" />
+                            <span>{match.time}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin size={12} className="text-slate-300" />
+                            <span>{match.court}</span>
+                          </div>
+                        </div>
+
+                        {/* Matchup Area */}
+                        <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex items-center justify-between gap-2">
+                          {/* Player 1 */}
+                          <div className="flex-1 flex flex-col items-center">
+                            <div className="relative">
+                              <img 
+                                src={`https://picsum.photos/seed/${match.player1}/100/100`} 
+                                alt={match.player1} 
+                                className="w-12 h-12 rounded-full border-2 border-white shadow-sm mb-2"
+                                referrerPolicy="no-referrer"
+                              />
+                              {isFinished && match.winner === 1 && (
+                                <div className="absolute -top-1 -left-1 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
+                                  胜
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-black text-slate-800 text-center">{match.player1}{match.player1_2 ? `/${match.player1_2}` : ''}</span>
+                          </div>
+
+                          {/* Score */}
+                          <div className="flex flex-col items-center gap-1 min-w-[80px]">
+                            {isUpcoming ? (
+                              <div className="text-lg font-black text-slate-300 italic tracking-widest">VS</div>
+                            ) : (
+                              <>
+                                <div className="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg text-sm font-black tracking-tighter">
+                                  {`${match.setScore1 || 0} : ${match.setScore2 || 0}`}
+                                </div>
+                                <div className="bg-white border border-orange-100 text-orange-400 px-3 py-0.5 rounded-lg text-[10px] font-black">
+                                  {`${match.score1 || 0} : ${match.score2 || 0}`}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Player 2 */}
+                          <div className="flex-1 flex flex-col items-center">
+                            <div className="relative">
+                              <img 
+                                src={`https://picsum.photos/seed/${match.player2}/100/100`} 
+                                alt={match.player2} 
+                                className="w-12 h-12 rounded-full border-2 border-white shadow-sm mb-2"
+                                referrerPolicy="no-referrer"
+                              />
+                              {isFinished && match.winner === 2 && (
+                                <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
+                                  胜
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-black text-slate-800 text-center">{match.player2}{match.player2_2 ? `/${match.player2_2}` : ''}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Scenario 3: Team Competition Lineup & Schedule */}
+          {selectedMatch.id === 'L3' && (
+            <div className="space-y-4">
+              {/* Header Info */}
+              <div className="bg-white p-6 rounded-[32px] border border-slate-100 card-shadow">
+                <h2 className="text-lg font-black text-slate-900 leading-tight mb-4">{selectedMatch.title}</h2>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">队伍名称</p>
+                    <p className="text-sm font-black text-slate-900">{selectedMatch.teamName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">领队姓名</p>
+                    <p className="text-sm font-black text-slate-900">{selectedMatch.leaderName}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowTeamMembers(true)}
+                  className="w-full py-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between px-4 group active:bg-slate-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-brand-primary" />
+                    <span className="text-xs font-black text-slate-700">我的团队</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">查看人员名单</span>
+                    <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+              </div>
+
+              {/* Sub Tabs */}
+              <div className="bg-white p-1 rounded-2xl border border-slate-100 flex gap-1">
+                {[
+                  { id: 'lineup', label: '填写出场名单' },
+                  { id: 'schedule', label: '查看比赛赛况' },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setDetailTab(tab.id as any)}
+                    className={cn(
+                      "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                      detailTab === tab.id ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/20" : "text-slate-400 hover:bg-slate-50"
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {detailTab === 'lineup' && (
+                <div className="space-y-4">
+                  <div className="bg-slate-900 p-5 rounded-[32px] border border-slate-800 card-shadow relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                    <div className="relative z-10 flex justify-between items-center">
+                      <div>
+                        <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">下一场对手</div>
+                        <div className="text-lg font-black text-white tracking-tight">{selectedMatch.nextMatch.opponent}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">{selectedMatch.nextMatch.time}</div>
+                        <div className="text-sm font-black text-brand-primary">{selectedMatch.nextMatch.court}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-[32px] border border-slate-100 card-shadow">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-sm font-black text-slate-900">填写出场名单</h3>
+                      <button 
+                        onClick={() => setShowTransferPermission(true)}
+                        className="text-[10px] text-brand-primary font-black uppercase tracking-widest bg-brand-primary/5 px-2 py-1 rounded-lg flex items-center gap-1"
+                      >
+                        <Shield size={12} />
+                        转让权限
+                      </button>
+                    </div>
+
+                    <div className="space-y-6">
+                      {lineup.map((slot: any, idx: number) => (
+                        <div key={idx} className="space-y-3">
+                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <div className="w-1 h-3 bg-brand-primary rounded-full" />
+                            {slot.order}
+                          </div>
+                          <div className="grid grid-cols-1 gap-2">
+                            {slot.players.map((p: string, pIdx: number) => (
+                              <div key={pIdx} className="relative">
+                                <select 
+                                  value={p}
+                                  onChange={(e) => {
+                                    const newLineup = [...lineup];
+                                    newLineup[idx].players[pIdx] = e.target.value;
+                                    setLineup(newLineup);
+                                  }}
+                                  className="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm font-black text-slate-900 appearance-none focus:ring-2 focus:ring-brand-primary/20"
+                                >
+                                  <option value="">{slot.players.length > 1 ? `选择队员 ${pIdx + 1}` : '请选择队员'}</option>
+                                  {selectedMatch.availablePlayers.map((player: string) => (
+                                    <option key={player} value={player}>{player}</option>
+                                  ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                  <ChevronDown size={16} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button 
+                      onClick={() => {
+                        alert('出场名单已提交！');
+                        setSelectedMatch(null);
+                      }}
+                      style={{ backgroundColor: '#1FC47F' }}
+                      className="w-full mt-8 py-4 text-white rounded-2xl text-sm font-black shadow-xl active:scale-[0.98] transition-all"
+                    >
+                      确认并提交名单
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {detailTab === 'schedule' && (
+                <div className="space-y-4">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest px-2">队伍全部比赛</h3>
+                  {selectedMatch.teamMatches.map((match: any) => {
+                    const isFinished = match.status === 'finished';
+                    const isOngoing = match.status === 'ongoing';
+                    const isUpcoming = match.status === 'upcoming';
+
+                    return (
+                      <motion.div 
+                        layout
+                        key={match.id}
+                        className="bg-white rounded-[32px] border border-slate-100 overflow-hidden card-shadow relative"
+                      >
+                        {/* Status Ribbon */}
+                        <div className={cn(
+                          "absolute top-0 right-0 px-6 py-1 translate-x-[25%] translate-y-[25%] rotate-45 text-[10px] font-black text-white z-10",
+                          isFinished ? "bg-brand-primary" : (isOngoing ? "bg-red-500" : "bg-slate-400")
+                        )}>
+                          {isFinished ? '已结束' : (isOngoing ? '比赛中' : '待开始')}
+                        </div>
+
+                        <div className="p-6">
+                          {/* Header */}
+                          <div className="flex justify-between items-start mb-4 pr-12">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-black text-slate-800">{match.category}</h3>
+                                <span className="bg-brand-primary/10 text-brand-primary text-[8px] px-1.5 py-0.5 rounded font-black uppercase">团体赛</span>
+                              </div>
+                              <p className="text-[10px] font-bold text-slate-400 mt-0.5">{match.groupInfo}</p>
+                            </div>
+                          </div>
+
+                          {/* Info Row */}
+                          <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-4 pb-4 border-b border-slate-50">
+                            <div className="flex items-center gap-1">
+                              <Calendar size={12} className="text-slate-300" />
+                              <span>{match.date}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <FileText size={12} className="text-slate-300" />
+                              <span className="text-brand-primary">
+                                {(() => {
+                                  const [h, m] = match.time.split(':').map(Number);
+                                  const total = h * 60 + m;
+                                  const format = (t: number) => `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`;
+                                  return `${format(total - 30)}-${format(total - 15)}`;
+                                })()}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock size={12} className="text-slate-300" />
+                              <span>{match.time}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin size={12} className="text-slate-300" />
+                              <span>{match.court}</span>
+                            </div>
+                            <div className="ml-auto">
+                              {match.lineupStatus === 'submitted' ? (
+                                <span className="text-emerald-500 flex items-center gap-1">
+                                  <Check size={12} />
+                                  名单已提交
+                                </span>
+                              ) : (
+                                <span className="text-amber-500 flex items-center gap-1">
+                                  <AlertCircle size={12} />
+                                  名单未提交
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Matchup Area */}
+                          <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex items-center justify-between gap-2">
+                            <div className="flex-1 text-center">
+                              <div className="text-sm font-black text-slate-900">{selectedMatch.teamName}</div>
+                              <div className="text-[8px] text-slate-400 font-bold uppercase mt-1">我的队伍</div>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-1 min-w-[80px]">
+                              {isUpcoming ? (
+                                <div className="text-lg font-black text-slate-300 italic tracking-widest">VS</div>
+                              ) : (
+                                <>
+                                  <div className="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg text-sm font-black tracking-tighter">
+                                    {match.score}
+                                  </div>
+                                  {match.result && (
+                                    <div className="bg-white border border-orange-100 text-orange-400 px-3 py-0.5 rounded-lg text-[10px] font-black">
+                                      {match.result}
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+
+                            <div className="flex-1 text-center">
+                              <div className="text-sm font-black text-slate-900">{match.opponent}</div>
+                              <div className="text-[8px] text-slate-400 font-bold uppercase mt-1">对手</div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Team Members Modal */}
+              <AnimatePresence>
+                {showTeamMembers && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] flex items-end justify-center p-0 bg-slate-900/60 backdrop-blur-sm"
+                  >
+                    <motion.div 
+                      initial={{ y: "100%" }}
+                      animate={{ y: 0 }}
+                      exit={{ y: "100%" }}
+                      className="bg-white w-full max-w-md rounded-t-[40px] p-8 flex flex-col max-h-[80vh]"
+                    >
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-black text-slate-900">人员名单</h3>
+                        <button 
+                          onClick={() => setShowTeamMembers(false)}
+                          className="p-2 text-slate-400 hover:text-slate-900 transition-colors"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+                      
+                      <div className="overflow-y-auto space-y-3 pb-8">
+                        {selectedMatch.availablePlayers.map((player: string, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                <User size={20} />
+                              </div>
+                              <div>
+                                <div className="text-sm font-black text-slate-900">{player}</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">队员</div>
+                              </div>
+                            </div>
+                            <div className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">已就绪</div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Transfer Permission Modal */}
+              <AnimatePresence>
+                {showTransferPermission && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[110] flex items-end justify-center p-0 bg-slate-900/60 backdrop-blur-sm"
+                  >
+                    <motion.div 
+                      initial={{ y: "100%" }}
+                      animate={{ y: 0 }}
+                      exit={{ y: "100%" }}
+                      className="bg-white w-full max-w-md rounded-t-[40px] p-8 flex flex-col max-h-[90vh]"
+                    >
+                      <div className="flex justify-between items-center mb-6">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-900">转让管理权限</h3>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">转让后您将失去该赛事的管理权限</p>
+                        </div>
+                        <button 
+                          onClick={() => setShowTransferPermission(false)}
+                          className="p-2 text-slate-400 hover:text-slate-900 transition-colors"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+
+                      <div className="relative mb-6">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input 
+                          type="text" 
+                          placeholder="搜索队员姓名..."
+                          value={transferSearch}
+                          onChange={(e) => setTransferSearch(e.target.value)}
+                          className="w-full bg-slate-50 border-0 rounded-2xl pl-12 pr-4 py-4 text-sm font-black text-slate-900 focus:ring-2 focus:ring-brand-primary/20"
+                        />
+                      </div>
+                      
+                      <div className="overflow-y-auto space-y-3 pb-8">
+                        {selectedMatch.availablePlayers
+                          .filter((p: string) => p.includes(transferSearch))
+                          .map((player: string, idx: number) => (
+                          <button 
+                            key={idx} 
+                            onClick={() => {
+                              if (confirm(`确定要将“${selectedMatch.title}”的管理权限转让给“${player}”吗？`)) {
+                                alert('权限转让成功！');
+                                setShowTransferPermission(false);
+                                setSelectedMatch(null);
+                              }
+                            }}
+                            className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-colors text-left"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                <User size={20} />
+                              </div>
+                              <div>
+                                <div className="text-sm font-black text-slate-900">{player}</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">队员</div>
+                              </div>
+                            </div>
+                            <div className="text-[10px] font-black text-brand-primary bg-brand-primary/5 px-3 py-1.5 rounded-xl">选择转让</div>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pb-20 bg-slate-50 min-h-screen">
+      <header className="bg-white px-4 pt-12 pb-4 flex items-center gap-4 border-b border-slate-100 sticky top-0 z-50 w-full max-w-md">
+        <button onClick={onBack} className="p-2 rounded-full hover:bg-slate-100">
+          <ChevronRight size={20} className="rotate-180" />
+        </button>
+        <h1 className="text-lg font-bold">领队管理中心</h1>
+      </header>
+
+      <div className="bg-white px-4 py-2 flex gap-4 border-b border-slate-100 sticky top-[88px] z-40">
+        {[
+          { id: 'registering', label: '报名中' },
+          { id: 'ongoing', label: '比赛中' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={cn(
+              "relative py-3 text-xs font-black uppercase tracking-widest transition-all",
+              activeTab === tab.id ? "text-brand-primary" : "text-slate-400"
+            )}
+          >
+            {tab.label}
+            {activeTab === tab.id && (
+              <motion.div 
+                layoutId="activeLeaderTab"
+                className="absolute bottom-0 left-0 right-0 h-1 bg-brand-primary rounded-full"
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div className="p-4 space-y-4">
+        {[...registeringMatches, ...ongoingMatches].filter(m => m.status === (activeTab === 'registering' ? 'registration' : 'ongoing')).map((t: any) => (
+          <motion.div 
+            key={t.id}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setSelectedMatch(t)}
+            className="bg-white rounded-[24px] overflow-hidden card-shadow border border-slate-100 text-left flex h-32"
+          >
+            <div className="relative w-32 flex-shrink-0">
+              <img src={t.image} alt={t.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <div className="absolute top-2 left-2">
+                <span className={cn(
+                  "text-[7px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider backdrop-blur-md border",
+                  t.status === 'registration' ? "bg-emerald-500/80 text-white border-emerald-400" : "bg-blue-500/80 text-white border-blue-400"
+                )}>
+                  {t.status === 'registration' ? '报名中' : '比赛中'}
+                </span>
+              </div>
+            </div>
+            <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
+              <div className="space-y-1">
+                <h4 className="text-slate-900 text-xs font-black leading-tight line-clamp-2">{t.title}</h4>
+                <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold">
+                  <MapPin size={10} className="text-slate-300" />
+                  <span className="truncate">{t.location}</span>
+                </div>
+              </div>
+              
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold">
+                    <Calendar size={10} className="text-slate-300" />
+                    <span>{t.matchStartTime.split(' ')[0]}</span>
+                  </div>
+                  {t.status === 'registration' ? (
+                    <div className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100">
+                      {getRegistrationCountdown(t.regEndTime)}
+                    </div>
+                  ) : (
+                    <div className="text-[9px] font-black text-brand-primary bg-brand-primary/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                      <Activity size={8} />
+                      查看赛况
+                    </div>
+                  )}
+                </div>
+                
+                {t.status === 'registration' && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-brand-primary" 
+                        style={{ width: `${Math.min(100, (t.participants / (t.maxParticipants || 200)) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[8px] font-bold text-slate-400 whitespace-nowrap">
+                      {t.participants}/{t.maxParticipants || 200} 席
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const ProfilePage = ({ 
   userProfile, 
-  onUpdateProfile 
+  onUpdateProfile,
+  onSelectTournament
 }: { 
   userProfile: ParticipantInfo | null, 
-  onUpdateProfile: (profile: ParticipantInfo) => void 
+  onUpdateProfile: (profile: ParticipantInfo) => void,
+  onSelectTournament?: (tournament: Tournament) => void
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [activeSubPage, setActiveSubPage] = useState<'none' | 'orders' | 'coupons' | 'wallet' | 'my_competitions' | 'achievements' | 'id_card' | 'verification' | 'participants' | 'notifications' | 'my_games' | 'sports_map' | 'clubs' | 'favorites' | 'customer_service'>('none');
+  const [activeSubPage, setActiveSubPage] = useState<'none' | 'orders' | 'coupons' | 'wallet' | 'my_competitions' | 'achievements' | 'id_card' | 'verification' | 'participants' | 'notifications' | 'my_games' | 'sports_map' | 'clubs' | 'favorites' | 'customer_service' | 'leader_management'>('none');
+  const [leaderInitialState, setLeaderInitialState] = useState<{ tab: 'registering' | 'ongoing', matchId?: string }>({ tab: 'registering' });
   const [notificationTab, setNotificationTab] = useState<'tournament' | 'venue' | 'platform' | 'course'>('tournament');
   const [playerPool, setPlayerPool] = useState<ParticipantInfo[]>(MOCK_PLAYER_POOL);
   const [selectedCompetition, setSelectedCompetition] = useState<any | null>(null);
@@ -3055,6 +4053,17 @@ const ProfilePage = ({
           </button>
         </div>
       </div>
+    );
+  }
+
+  if (activeSubPage === 'leader_management') {
+    return (
+      <LeaderManagementPage 
+        onBack={() => setActiveSubPage('none')} 
+        initialTab={leaderInitialState.tab}
+        initialSelectedMatchId={leaderInitialState.matchId}
+        onSelectTournament={onSelectTournament}
+      />
     );
   }
 
@@ -4525,6 +5534,60 @@ const ProfilePage = ({
                 </div>
               </button>
             ))}
+          </div>
+        </section>
+
+        {/* Leader Management */}
+        <section className="space-y-3">
+          <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest px-2">领队管理</h3>
+          <div className="bg-white rounded-[32px] border border-slate-100 card-shadow overflow-hidden">
+            <button 
+              onClick={() => {
+                setLeaderInitialState({ tab: 'registering' });
+                setActiveSubPage('leader_management');
+              }}
+              className="w-full bg-slate-900 p-5 flex items-center justify-between active:opacity-90 transition-all group relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-brand-primary/20 transition-colors"></div>
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-brand-primary">
+                  <Users size={24} />
+                </div>
+                <div className="text-left">
+                  <h4 className="text-white text-sm font-black tracking-tight">领队管理中心</h4>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">管理队伍 · 填写名单 · 报名活动</p>
+                </div>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-lg shadow-brand-primary/20 relative z-10">
+                <ArrowRight size={16} strokeWidth={3} />
+              </div>
+            </button>
+            
+            <div className="grid grid-cols-3 divide-x divide-slate-50 border-t border-slate-50">
+              {[
+                { label: '查看报名情况', icon: ClipboardList, onClick: () => {
+                  setLeaderInitialState({ tab: 'registering' });
+                  setActiveSubPage('leader_management');
+                }},
+                { label: '查看比赛赛况', icon: Activity, onClick: () => {
+                  setLeaderInitialState({ tab: 'ongoing' });
+                  setActiveSubPage('leader_management');
+                }},
+                { label: '填写出场名单', icon: FileBadge, onClick: () => {
+                  setLeaderInitialState({ tab: 'ongoing', matchId: 'L3' });
+                  setActiveSubPage('leader_management');
+                }},
+              ].map((btn, i) => (
+                <button 
+                  key={i}
+                  onClick={btn.onClick}
+                  className="py-4 flex flex-col items-center gap-1.5 active:bg-slate-50 transition-colors"
+                >
+                  <btn.icon size={16} className="text-brand-primary" />
+                  <span className="text-[10px] font-bold text-slate-600 tracking-tight">{btn.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -10269,7 +11332,13 @@ export default function App() {
           </div>
         );
       case 'profile':
-        return <ProfilePage userProfile={userProfile} onUpdateProfile={handleSaveProfile} />;
+        return (
+          <ProfilePage 
+            userProfile={userProfile} 
+            onUpdateProfile={handleSaveProfile} 
+            onSelectTournament={setSelectedTournament}
+          />
+        );
       default:
         return (
           <div className="flex flex-col items-center justify-center h-[80vh] text-slate-400">
