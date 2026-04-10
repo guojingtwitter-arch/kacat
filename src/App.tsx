@@ -3902,7 +3902,13 @@ const ProfilePage = ({
   const [competitionTab, setCompetitionTab] = useState<'registering' | 'ongoing' | 'history'>('ongoing');
   const [walletTab, setWalletTab] = useState<'balance' | 'history'>('balance');
   const [idTab, setIdTab] = useState<'current' | 'history'>('current');
-  const [checkInQRData, setCheckInQRData] = useState<{title: string, subtitle: string} | null>(null);
+  const [checkInQRData, setCheckInQRData] = useState<{
+    title: string;
+    subtitle: string;
+    player?: string;
+    category?: string;
+    groupInfo?: string;
+  } | null>(null);
   const [showTotalCheckIn, setShowTotalCheckIn] = useState(false);
   const [selectedMatches, setSelectedMatches] = useState<number[]>([]);
   const [selectedHistoryMatch, setSelectedHistoryMatch] = useState<any | null>(null);
@@ -5041,15 +5047,18 @@ const ProfilePage = ({
                       </div>
 
                       {match.status === '待检录' && (
-                        <button 
-                          onClick={() => setCheckInQRData({
-                            title: '检录二维码',
-                            subtitle: match.event
-                          })}
-                          className="w-full py-3.5 bg-brand-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
-                        >
-                          去检录
-                        </button>
+                          <button 
+                            onClick={() => setCheckInQRData({
+                              title: '检录二维码',
+                              subtitle: match.event,
+                              player: userProfile?.name || '郭靖',
+                              category: match.event,
+                              groupInfo: ''
+                            })}
+                            className="w-full py-3.5 bg-brand-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
+                          >
+                            去检录
+                          </button>
                       )}
                     </div>
                   ))}
@@ -5160,7 +5169,10 @@ const ProfilePage = ({
                               <button 
                                 onClick={() => setCheckInQRData({
                                   title: '检录二维码',
-                                  subtitle: match.event
+                                  subtitle: match.event,
+                                  player: userProfile?.name || '郭靖',
+                                  category: match.event,
+                                  groupInfo: ''
                                 })}
                                 className="w-full py-3 bg-white border border-slate-200 text-slate-900 rounded-xl text-[10px] font-black hover:bg-slate-50 active:scale-95 transition-all"
                               >
@@ -9055,7 +9067,13 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
   const [showElectronicPass, setShowElectronicPass] = useState(false);
   const [idTab, setIdTab] = useState<'current' | 'history'>('current');
   const [showTotalCheckIn, setShowTotalCheckIn] = useState(false);
-  const [checkInQRData, setCheckInQRData] = useState<{title: string, subtitle: string} | null>(null);
+  const [checkInQRData, setCheckInQRData] = useState<{
+    title: string;
+    subtitle: string;
+    player?: string;
+    category?: string;
+    groupInfo?: string;
+  } | null>(null);
 
   useEffect(() => {
     setSelectedSession('第1节');
@@ -9221,13 +9239,20 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
           
           // My Match logic: EXACTLY 3 matches in Session 1, Court 1
           let isMyMatch = false;
-          let groupInfo = `${Math.floor(Math.random() * 8) + 1}组第${Math.floor(Math.random() * 3) + 1}轮`;
+          const randomGroupNum = Math.floor(Math.random() * 8) + 1;
+          const randomRoundNum = Math.floor(Math.random() * 3) + 1;
+          let groupInfo = `${randomGroupNum}组第${randomRoundNum}轮`;
           let p1 = players[p1Idx];
           let p2 = players[p2Idx];
           let p1_2 = '';
           let p2_2 = '';
-          let pos1 = `${Math.floor(Math.random() * 8) + 1}组${Math.floor(Math.random() * 4) + 1}`;
-          let pos2 = `${Math.floor(Math.random() * 8) + 1}组${Math.floor(Math.random() * 4) + 1}`;
+          
+          const p1PosNum = Math.floor(Math.random() * 4) + 1;
+          let p2PosNum = Math.floor(Math.random() * 4) + 1;
+          while (p2PosNum === p1PosNum) p2PosNum = Math.floor(Math.random() * 4) + 1;
+          
+          let pos1 = `${randomGroupNum}组${p1PosNum}`;
+          let pos2 = `${randomGroupNum}组${p2PosNum}`;
 
           if (isTeamTournament) {
             if (sessionIdx === 0) {
@@ -9346,6 +9371,11 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
             if (matchNum < 4) {
               category = '男单B组';
               groupInfo = `4组第${matchNum}轮`;
+              const myP1Pos = Math.floor(Math.random() * 4) + 1;
+              let myP2Pos = Math.floor(Math.random() * 4) + 1;
+              while (myP2Pos === myP1Pos) myP2Pos = Math.floor(Math.random() * 4) + 1;
+              pos1 = `4组${myP1Pos}`;
+              pos2 = `4组${myP2Pos}`;
             }
           } else if (!isTeamTournament) {
             // For other individual matches, ensure they are NOT "My Matches"
@@ -9451,9 +9481,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
       return `${hh}:${mm}`;
     };
 
-    const checkInTimeStr = match.category === '男单B组' && match.groupInfo === '16进8' 
-      ? "14:30-15:45" 
-      : `${formatTime(checkInStartMins)}-${formatTime(checkInEndMins)}`;
+    const checkInTimeStr = `${formatTime(checkInStartMins)}-${formatTime(checkInEndMins)}`;
 
     if (tournament.id === '2') {
       return (
@@ -9478,13 +9506,13 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
             {/* Header: 团体项目+代码+场次+比赛项目, 组别 */}
             <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
               <h3 className="text-xs font-bold text-slate-800">
-                {match.category}{match.id}{match.matchNum}{match.subCategory}
+                {match.category}{match.id}第{((match.matchNum - 1) % 5) + 1}场{match.subCategory}
               </h3>
               <span className="text-xs font-bold text-slate-800 mr-12">{match.groupInfo}</span>
             </div>
 
             {/* Sub-header: Date, Time, Court, Match Num */}
-            <div className="flex justify-center gap-4 text-[10px] text-slate-400 mb-4">
+            <div className="flex justify-center gap-4 text-xs font-bold text-slate-600 mb-4">
               <span>{match.date.replace('8/', '1月')}</span>
               <span>{match.time}</span>
               <span>{match.court}</span>
@@ -9559,9 +9587,12 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                 {isUpcoming ? (
                   <button 
                     onClick={() => setCheckInQRData({
-                      title: '检录二维码',
-                      subtitle: `${match.category} • ${match.groupInfo}`
-                    })}
+                    title: '检录二维码',
+                    subtitle: `${match.category} • ${match.groupInfo}`,
+                    player: match.player1,
+                    category: match.category,
+                    groupInfo: match.groupInfo
+                  })}
                     className="px-6 py-2 bg-brand-primary text-white rounded-lg text-xs font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
                   >
                     去检录
@@ -9594,30 +9625,26 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
 
         <div className="p-4">
           {/* Header */}
-          <div className="flex justify-between items-start mb-4 pr-12">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-black text-slate-800">{match.category}{match.id}</h3>
-                <span className="bg-brand-primary/10 text-brand-primary text-[8px] px-1.5 py-0.5 rounded font-black uppercase">我的比赛</span>
-              </div>
-              <p className="text-[10px] font-bold text-slate-400 mt-0.5">{match.groupInfo}</p>
+          <div className="flex justify-between items-center mb-4 pr-12">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-black text-slate-800">{match.category}{match.id}</h3>
+              <span className="bg-brand-primary/10 text-brand-primary text-[8px] px-1.5 py-0.5 rounded font-black uppercase">我的比赛</span>
             </div>
+            <span className="text-[10px] font-black text-slate-500">{match.groupInfo}</span>
           </div>
 
           {/* Info Row */}
-          <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-4 pb-4 border-b border-slate-50">
-            <div className="flex items-center gap-1">
-              <Calendar size={12} className="text-slate-300" />
-              <span>{match.date}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock size={12} className="text-slate-300" />
-              <span>{match.time}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <MapPin size={12} className="text-slate-300" />
-              <span>{match.court}</span>
-            </div>
+          <div className="flex items-center justify-center gap-4 text-xs font-bold text-slate-600 mb-4 pb-4 border-b border-slate-50">
+            <span>{(() => {
+              const dateParts = match.date.split('-');
+              if (dateParts.length === 3) {
+                return `${parseInt(dateParts[1])}月${parseInt(dateParts[2])}日`;
+              }
+              return match.date;
+            })()}</span>
+            <span>{match.time}</span>
+            <span>{match.court}</span>
+            <span>{match.matchNum}</span>
           </div>
 
           {/* Matchup Area */}
@@ -9671,6 +9698,30 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
             </div>
           </div>
 
+          {/* Duration Info - Moved below matchup area */}
+          {isFinished && (
+            <div className="flex items-center justify-center gap-6 text-[10px] font-bold text-slate-500 mt-4 pt-4 border-t border-slate-50">
+              {match.duration && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-300">用时</span>
+                  <span className="text-slate-800">{match.duration}</span>
+                </div>
+              )}
+              {match.startTime && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-300">开始</span>
+                  <span className="text-slate-800">{match.startTime}</span>
+                </div>
+              )}
+              {match.endTime && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-300">结束</span>
+                  <span className="text-slate-800">{(match.status === 'finished' || match.status === 'walkover') ? match.endTime : '--'}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Check-in Section */}
           {!isFinished && (
             <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
@@ -9682,7 +9733,10 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                 <button 
                   onClick={() => setCheckInQRData({
                     title: '检录二维码',
-                    subtitle: `${match.category} • ${match.groupInfo}`
+                    subtitle: `${match.category} • ${match.groupInfo}`,
+                    player: match.player1,
+                    category: match.category,
+                    groupInfo: match.groupInfo
                   })}
                   className="px-6 py-2 bg-brand-primary text-white rounded-lg text-xs font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
                 >
@@ -9729,13 +9783,13 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
             {/* Header: 团体项目+代码+场次+比赛项目, 组别 */}
             <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
               <h3 className="text-xs font-bold text-slate-800">
-                {match.category}{match.id}{match.matchNum}{match.subCategory}
+                {match.category}{match.id}第{((match.matchNum - 1) % 5) + 1}场{match.subCategory}
               </h3>
               <span className="text-xs font-bold text-slate-800 mr-12">{match.groupInfo}</span>
             </div>
 
             {/* Sub-header: Date, Time, Court, Match Num */}
-            <div className="flex justify-center gap-4 text-[10px] text-slate-400 mb-4">
+            <div className="flex justify-center gap-4 text-xs font-bold text-slate-600 mb-4">
               <span>{match.date.replace('8/', '1月')}</span>
               <span>{match.time}</span>
               <span>{match.court}</span>
@@ -9823,43 +9877,28 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
 
       <div className="p-4">
         {/* Header */}
-        <div className="flex justify-between items-start mb-4 pr-12">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-black text-slate-800">{match.category}{match.id}</h3>
-              {match.isMyMatch && (
-                <span className="bg-brand-primary/10 text-brand-primary text-[8px] px-1.5 py-0.5 rounded font-black uppercase">我的比赛</span>
-              )}
-            </div>
-            <p className="text-[10px] font-bold text-slate-400 mt-0.5">{match.groupInfo}</p>
+        <div className="flex justify-between items-center mb-4 pr-12">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-black text-slate-800">{match.category}{match.id}</h3>
+            {match.isMyMatch && (
+              <span className="bg-brand-primary/10 text-brand-primary text-[8px] px-1.5 py-0.5 rounded font-black uppercase">我的比赛</span>
+            )}
           </div>
+          <span className="text-[10px] font-black text-slate-500">{match.groupInfo}</span>
         </div>
 
         {/* Info Row */}
-        <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-4 pb-4 border-b border-slate-50">
-          <div className="flex items-center gap-1">
-            <Calendar size={12} className="text-slate-300" />
-            <span>{match.date}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <FileText size={12} className="text-slate-300" />
-            <span className="text-brand-primary">
-              {(() => {
-                const [h, m] = match.time.split(':').map(Number);
-                const total = h * 60 + m;
-                const format = (t: number) => `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`;
-                return `${format(total - 30)}-${format(total - 15)}`;
-              })()}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock size={12} className="text-slate-300" />
-            <span>{match.time}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <MapPin size={12} className="text-slate-300" />
-            <span>{match.court}</span>
-          </div>
+        <div className="flex items-center justify-center gap-4 text-xs font-bold text-slate-600 mb-4 pb-4 border-b border-slate-50">
+          <span>{(() => {
+            const dateParts = match.date.split('-');
+            if (dateParts.length === 3) {
+              return `${parseInt(dateParts[1])}月${parseInt(dateParts[2])}日`;
+            }
+            return match.date;
+          })()}</span>
+          <span>{match.time}</span>
+          <span>{match.court}</span>
+          <span>{match.matchNum}</span>
         </div>
 
         {/* Matchup Area */}
@@ -9924,7 +9963,7 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
         </div>
 
         {/* Duration Info - Moved below matchup area */}
-        <div className="flex items-center gap-6 text-[10px] font-bold text-slate-500 mt-4 pt-4 border-t border-slate-50">
+        <div className="flex items-center justify-center gap-6 text-[10px] font-bold text-slate-500 mt-4 pt-4 border-t border-slate-50">
           {match.duration && (
             <div className="flex items-center gap-2">
               <span className="text-slate-300">用时</span>
@@ -10581,7 +10620,10 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                 <button 
                   onClick={() => setCheckInQRData({
                     title: '检录二维码',
-                    subtitle: '男单B组 • 16进8'
+                    subtitle: '男单B组 • 16进8',
+                    player: '张伟',
+                    category: '男单B组',
+                    groupInfo: '16进8'
                   })}
                   className="bg-brand-primary text-white px-4 py-2 rounded-xl text-[10px] font-black flex items-center gap-2 hover:bg-brand-primary/90 shadow-lg shadow-brand-primary/20 transition-all active:scale-95"
                 >
@@ -10759,7 +10801,10 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
                             <button 
                               onClick={() => setCheckInQRData({
                                 title: '检录二维码',
-                                subtitle: `${match.category} • ${match.groupInfo}`
+                                subtitle: `${match.category} • ${match.groupInfo}`,
+                                player: match.player1,
+                                category: match.category,
+                                groupInfo: match.groupInfo
                               })}
                               className="w-full py-3.5 bg-brand-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
                             >
@@ -10842,22 +10887,30 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
               className="bg-white w-full max-w-xs rounded-[40px] overflow-hidden shadow-2xl relative z-10 flex flex-col items-center p-8"
             >
               <div className="w-16 h-1.5 bg-slate-100 rounded-full mb-8" />
-              <h3 className="text-lg font-black text-slate-900 mb-2">{checkInQRData.title}</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8 text-center">{checkInQRData.subtitle}</p>
+              
+              {/* Player Info */}
+              <div className="flex flex-col items-center mb-6">
+                <img 
+                  src={`https://picsum.photos/seed/${checkInQRData.player}/100/100`}
+                  alt={checkInQRData.player}
+                  className="w-16 h-16 rounded-full border-2 border-brand-primary/20 shadow-sm mb-3"
+                  referrerPolicy="no-referrer"
+                />
+                <p className="text-base font-black text-slate-900">{checkInQRData.player}</p>
+                <p className="text-xs font-bold text-brand-primary mt-1">
+                  {checkInQRData.category} <span className="mx-1 text-slate-300">|</span> {checkInQRData.groupInfo}
+                </p>
+              </div>
               
               <div className="w-48 h-48 bg-slate-50 rounded-3xl border border-slate-100 p-4 mb-8 flex items-center justify-center relative overflow-hidden">
                 <QrCode size={120} className="text-slate-900" />
-              </div>
-
-              <div className="text-center space-y-1 mb-8">
-                <p className="text-sm font-black text-slate-800">张伟</p>
               </div>
 
               <button 
                 onClick={() => setCheckInQRData(null)}
                 className="w-full py-4 bg-brand-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-brand-primary/20 active:scale-95 transition-all"
               >
-                我知道了
+                请检录人员扫码检录
               </button>
             </motion.div>
           </div>
