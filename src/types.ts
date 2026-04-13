@@ -136,6 +136,7 @@ export interface ParticipantInfo {
   householdProof?: string;
   signature?: string;
   photo?: string;
+  tags?: string[];
 }
 
 export interface Venue {
