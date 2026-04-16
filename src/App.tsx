@@ -74,12 +74,39 @@ import {
 import { cn } from './types';
 
 const MOCK_PLAYER_POOL: ParticipantInfo[] = [
-  { name: '王小虎', phone: '13811112222', idType: 'ID_CARD', idNumber: '350101199505201234', gender: 'MALE', birthDate: '1995-05-20', clothingSize: 'L', photo: 'https://picsum.photos/seed/user1/200/300' },
-  { name: '林小鹿', phone: '13922223333', idType: 'ID_CARD', idNumber: '350202199808155678', gender: 'FEMALE', birthDate: '1998-08-15', clothingSize: 'M', photo: 'https://picsum.photos/seed/user2/200/300' },
-  { name: '陈大龙', phone: '13733334444', idType: 'ID_CARD', idNumber: '350303199212109012', gender: 'MALE', birthDate: '1992-12-10', clothingSize: 'XL', photo: 'https://picsum.photos/seed/user3/200/300' },
-  { name: '张美美', phone: '13544445555', idType: 'ID_CARD', idNumber: '350404199606201234', gender: 'FEMALE', birthDate: '1996-06-20', clothingSize: 'S', photo: 'https://picsum.photos/seed/user4/200/300', tags: ['领导', '状元'] },
-  { name: '李晓芳', phone: '13655556666', idType: 'ID_CARD', idNumber: '350505199404105678', gender: 'FEMALE', birthDate: '1994-04-10', clothingSize: 'M', photo: 'https://picsum.photos/seed/user5/200/300' }
+  { name: '王小虎', phone: '13811112222', idType: 'ID_CARD', idNumber: '350101199505201234', gender: 'MALE', birthDate: '1995-05-20', clothingSize: 'L', photo: 'https://picsum.photos/seed/user1/200/300', position: '经理', isLeader: false },
+  { name: '林小鹿', phone: '13922223333', idType: 'ID_CARD', idNumber: '350202199808155678', gender: 'FEMALE', birthDate: '1998-08-15', clothingSize: 'M', photo: 'https://picsum.photos/seed/user2/200/300', position: '职员', isLeader: false },
+  { name: '陈大龙', phone: '13733334444', idType: 'ID_CARD', idNumber: '350303199212109012', gender: 'MALE', birthDate: '1992-12-10', clothingSize: 'XL', photo: 'https://picsum.photos/seed/user3/200/300', position: '主管', isLeader: false },
+  { name: '张美美', phone: '13544445555', idType: 'ID_CARD', idNumber: '350404199606201234', gender: 'FEMALE', birthDate: '1996-06-20', clothingSize: 'S', photo: 'https://picsum.photos/seed/user4/200/300', tags: ['领导', '状元'], position: '总经理', isLeader: true },
+  { name: '李晓芳', phone: '13655556666', idType: 'ID_CARD', idNumber: '350505199404105678', gender: 'FEMALE', birthDate: '1994-04-10', clothingSize: 'M', photo: 'https://picsum.photos/seed/user5/200/300', position: '财务', isLeader: false }
 ];
+
+const MOCK_MATCH_DETAILS: Record<string, any> = {
+  '男团1001': {
+    code: '男团1001',
+    teamA: '翔骏羽队',
+    teamB: '友巨集团',
+    scoreA: 72,
+    scoreB: 45,
+    subMatches: [
+      { order: '第1场男双 90+', playersA: ['罗广立', '顾海滨'], scoresA: [52, 53], playersB: ['赖尊文', '沈志勇'], scoresB: [48, 48], subScore: '74:70', time: '14:30' },
+      { order: '第2场混双', playersA: ['陈晓娟', '张智敏'], scoresA: [33], playersB: ['许敏才', '张铁凡'], scoresB: [27], subScore: '30:21' },
+      { order: '第3场男双', playersA: ['李书翰', '李灿杰'], scoresA: [28, 28], playersB: ['陈镕杰', '陈俊均'], scoresB: [26, 25], subScore: '30:19' }
+    ]
+  },
+  '男团1002': {
+    code: '男团1002',
+    teamA: '厦门大学',
+    teamB: '集美大学',
+    scoreA: 68,
+    scoreB: 75,
+    subMatches: [
+      { order: '第1场男双 90+', playersA: ['张三', '李四'], scoresA: [45, 45], playersB: ['王五', '赵六'], scoresB: [50, 50], subScore: '60:75', time: '14:30' },
+      { order: '第2场混双', playersA: ['周七', '吴八'], scoresA: [28], playersB: ['郑九', '王十'], scoresB: [30], subScore: '28:30' },
+      { order: '第3场男双', playersA: ['孙一', '钱二'], scoresA: [25, 25], playersB: ['李三', '周四'], scoresB: [28, 28], subScore: '25:28' }
+    ]
+  }
+};
 import type { Tournament, Match, ParticipantInfo, IDType, Gender, ClothingSize, Venue, TimeSlot, PartnerRequest, TeamInfo, UniformInfo } from './types';
 
 const getRegistrationCountdown = (endTime: string) => {
@@ -100,6 +127,54 @@ const getRegistrationCountdown = (endTime: string) => {
   } catch (e) {
     return '报名进行中';
   }
+};
+
+const TournamentProgressBar = ({ status }: { status: Tournament['status'] }) => {
+  const stages = [
+    { id: 'registration', label: '报名' },
+    { id: 'scheduling', label: '编排' },
+    { id: 'ongoing', label: '比赛' },
+    { id: 'finished', label: '结束' }
+  ];
+
+  const currentIndex = stages.findIndex(s => s.id === status);
+  const progressIndex = status === 'finished' ? currentIndex : currentIndex + 0.5;
+
+  return (
+    <div className="mt-4 px-2">
+      <div className="relative flex justify-between items-center">
+        {/* Background Line */}
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-[2px] bg-slate-100 z-0" />
+        
+        {/* Active Line */}
+        <div 
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-brand-primary transition-all duration-500 z-0" 
+          style={{ width: `${(Math.max(0, progressIndex) / (stages.length - 1)) * 100}%` }}
+        />
+
+        {stages.map((stage, index) => {
+          const isActive = index <= currentIndex;
+          const isCurrent = index === currentIndex;
+          
+          return (
+            <div key={stage.id} className="relative z-10 flex flex-col items-center">
+              <div className={cn(
+                "w-2.5 h-2.5 rounded-full border-2 transition-all duration-500",
+                isActive ? "bg-brand-primary border-brand-primary scale-110" : "bg-white border-slate-200",
+                isCurrent && "ring-4 ring-brand-primary/20"
+              )} />
+              <span className={cn(
+                "text-[9px] font-black mt-1.5 transition-colors duration-500",
+                isActive ? "text-brand-primary" : "text-slate-400"
+              )}>
+                {stage.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 // Mock Data
@@ -688,9 +763,12 @@ const HomePage = ({
                 <div className="absolute top-3 left-3 flex gap-2">
                   <span className={cn(
                     "text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider backdrop-blur-md border",
-                    t.status === 'registration' ? "bg-emerald-500/80 text-white border-emerald-400" : "bg-blue-500/80 text-white border-blue-400"
+                    t.status === 'registration' ? "bg-emerald-500/80 text-white border-emerald-400" : 
+                    t.status === 'scheduling' ? "bg-amber-500/80 text-white border-amber-400" :
+                    t.status === 'ongoing' ? "bg-blue-500/80 text-white border-blue-400" :
+                    "bg-slate-500/80 text-white border-slate-400"
                   )}>
-                    {t.status === 'registration' ? '报名中' : '比赛中'}
+                    {t.status === 'registration' ? '报名中' : t.status === 'scheduling' ? '编排中' : t.status === 'ongoing' ? '比赛中' : '已结束'}
                   </span>
                 </div>
                 <div className="absolute top-3 right-3">
@@ -1708,7 +1786,7 @@ const PartnerMatchmakingPage = ({ onBack }: { onBack: () => void }) => {
 };
 
 const TournamentActivitiesPage = ({ onBack, onSelectTournament }: { onBack: () => void, onSelectTournament: (t: Tournament) => void }) => {
-  const [activeFilter, setActiveFilter] = useState<'all' | 'ongoing' | 'registration' | 'finished'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'ongoing' | 'registration' | 'finished' | 'scheduling'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredTournaments = useMemo(() => {
@@ -1721,8 +1799,8 @@ const TournamentActivitiesPage = ({ onBack, onSelectTournament }: { onBack: () =
 
   const tabs = [
     { id: 'all', label: '全部' },
-    { id: 'ongoing', label: '比赛中' },
     { id: 'registration', label: '报名中' },
+    { id: 'ongoing', label: '比赛中' },
     { id: 'finished', label: '已结束' },
   ];
 
@@ -1782,10 +1860,11 @@ const TournamentActivitiesPage = ({ onBack, onSelectTournament }: { onBack: () =
                     <span className={cn(
                       "text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-wider backdrop-blur-md border",
                       t.status === 'registration' ? "bg-emerald-500/80 text-white border-emerald-400" : 
+                      t.status === 'scheduling' ? "bg-amber-500/80 text-white border-amber-400" :
                       t.status === 'ongoing' ? "bg-blue-500/80 text-white border-blue-400" :
                       "bg-slate-500/80 text-white border-slate-400"
                     )}>
-                      {t.status === 'registration' ? '报名中' : t.status === 'ongoing' ? '比赛中' : '已结束'}
+                      {t.status === 'registration' ? '报名中' : t.status === 'scheduling' ? '编排中' : t.status === 'ongoing' ? '比赛中' : '已结束'}
                     </span>
                   </div>
                   <div className="absolute top-4 right-4">
@@ -6081,13 +6160,19 @@ const TournamentDetailPage = ({ tournament, onBack, onRegister }: { tournament: 
       <div className="px-6 -mt-8 relative z-10 bg-white rounded-t-[32px] pt-8">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold uppercase tracking-wider">
-              {tournament.status === 'registration' ? '正在报名' : '比赛中'}
+            <span className={cn(
+              "text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider",
+              tournament.status === 'registration' ? "bg-emerald-100 text-emerald-700" : 
+              tournament.status === 'scheduling' ? "bg-amber-100 text-amber-700" :
+              tournament.status === 'ongoing' ? "bg-blue-100 text-blue-700" :
+              "bg-slate-100 text-slate-700"
+            )}>
+              {tournament.status === 'registration' ? '正在报名' : tournament.status === 'scheduling' ? '编排中' : tournament.status === 'ongoing' ? '比赛中' : '已结束'}
             </span>
             <div className="flex items-center gap-1 text-slate-400">
               <User size={14} />
               <span className="text-xs font-medium">
-                {tournament.status === 'ongoing' ? '比赛中' : `${tournament.participants}席已报名 / 限额${tournament.maxParticipants || 500}席`}
+                {`${tournament.participants}人已报名 / 限额${tournament.maxParticipants || 500}人`}
               </span>
             </div>
           </div>
@@ -6102,6 +6187,10 @@ const TournamentDetailPage = ({ tournament, onBack, onRegister }: { tournament: 
         </div>
 
         <h1 className="text-2xl font-black leading-tight mb-4">{tournament.title}</h1>
+
+        <div className="mb-8">
+          <TournamentProgressBar status={tournament.status} />
+        </div>
 
         <div className="space-y-4 mb-8">
           <div className="flex items-start gap-3">
@@ -6494,6 +6583,9 @@ const RegistrationPage = ({
       birthDate: userProfile?.birthDate || '',
       clothingSize: '' as ClothingSize,
       householdProof: '',
+      tags: userProfile?.tags || [],
+      position: userProfile?.position || '',
+      isLeader: userProfile?.isLeader || false,
     },
     partnerInfo: {
       name: '',
@@ -6503,6 +6595,9 @@ const RegistrationPage = ({
       gender: 'MALE' as Gender,
       birthDate: '',
       clothingSize: '' as ClothingSize,
+      tags: [] as string[],
+      position: '',
+      isLeader: false,
     },
     paymentMethod: 'wechat' as 'wechat' | 'offline',
     registrationMethod: 'direct' as 'direct' | 'invite',
@@ -7698,7 +7793,14 @@ const RegistrationPage = ({
                             {m.name[0]}
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-slate-800">{m.name}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-bold text-slate-800">{m.name}</div>
+                              {m.tags?.map(tag => (
+                                <span key={tag} className="px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary text-[8px] font-black">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
                             <div className="text-[10px] text-slate-400">{m.phone} · {m.gender === 'FEMALE' ? '女' : '男'}</div>
                           </div>
                         </div>
@@ -7861,7 +7963,14 @@ const RegistrationPage = ({
                         {regData.personalInfo.name ? regData.personalInfo.name[0] : '?'}
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-slate-800">{regData.personalInfo.name || '未填写'}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-bold text-slate-800">{regData.personalInfo.name || '未填写'}</div>
+                          {regData.personalInfo.tags?.map(tag => (
+                            <span key={tag} className="px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary text-[8px] font-black">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                         <div className="text-[10px] text-slate-400">{regData.personalInfo.phone || '未填写手机号'}</div>
                       </div>
                     </div>
@@ -7904,7 +8013,14 @@ const RegistrationPage = ({
                           {regData.partnerInfo.name ? regData.partnerInfo.name[0] : '?'}
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-slate-800">{regData.partnerInfo.name || '未填写搭档'}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-bold text-slate-800">{regData.partnerInfo.name || '未填写搭档'}</div>
+                            {regData.partnerInfo.tags?.map(tag => (
+                              <span key={tag} className="px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary text-[8px] font-black">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                           <div className="text-[10px] text-slate-400">{regData.partnerInfo.phone || '未填写手机号'}</div>
                         </div>
                       </div>
@@ -8357,7 +8473,14 @@ const RegistrationPage = ({
                               {isSelected ? <Check size={20} /> : <User size={20} />}
                             </div>
                             <div>
-                              <div className="text-sm font-bold text-slate-900">{player.name}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-sm font-bold text-slate-900">{player.name}</div>
+                                {player.tags?.map(tag => (
+                                  <span key={tag} className="px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary text-[8px] font-black">
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
                               <div className="text-[10px] text-slate-400">{player.phone}</div>
                               <div className="text-[9px] text-slate-300 mt-0.5">{player.idNumber}</div>
                             </div>
@@ -8558,6 +8681,41 @@ const RegistrationPage = ({
 
                 {isRegistrationForm && (
                   <>
+                    {tournament.title.includes('企业杯') && (
+                      <>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-black text-slate-400 uppercase tracking-widest">职位</label>
+                          <input 
+                            type="text" 
+                            placeholder="请输入职位"
+                            value={editingPlayer.position || ''}
+                            onChange={e => setEditingPlayer({...editingPlayer, position: e.target.value})}
+                            className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-100 text-sm focus:outline-none focus:border-brand-primary transition-all"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 py-2">
+                          <input 
+                            type="checkbox" 
+                            id="isLeader"
+                            checked={editingPlayer.isLeader || false}
+                            onChange={e => {
+                              const isLeader = e.target.checked;
+                              let tags = editingPlayer.tags || [];
+                              if (isLeader) {
+                                if (!tags.includes('领导')) {
+                                  tags = [...tags, '领导'];
+                                }
+                              } else {
+                                tags = tags.filter(t => t !== '领导');
+                              }
+                              setEditingPlayer({...editingPlayer, isLeader, tags});
+                            }}
+                            className="w-4 h-4 rounded border-slate-300 text-brand-primary focus:ring-brand-primary"
+                          />
+                          <label htmlFor="isLeader" className="text-sm font-bold text-slate-700">是否领导</label>
+                        </div>
+                      </>
+                    )}
                     <div className="space-y-1.5">
                       <label className="text-xs font-black text-slate-400 uppercase tracking-widest">衣服尺寸</label>
                       <select 
@@ -8999,6 +9157,8 @@ const RegistrationPage = ({
 
 const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, onBack: () => void }) => {
   const [activeTab, setActiveTab] = useState<'program' | 'brackets' | 'my-matches'>('program');
+  const [showMatchDetailModal, setShowMatchDetailModal] = useState(false);
+  const [selectedMatchDetail, setSelectedMatchDetail] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('全部');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -10528,235 +10688,262 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
             ) : (
               /* Knockout Bracket */
               <div className="overflow-x-auto no-scrollbar -mx-4 px-4 pb-8">
-                <div className="min-w-[800px] flex gap-8">
-                  {/* 16进8 */}
-                  <div className="flex-1 space-y-4">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">16进8</div>
-                    {(() => {
-                      const isYuxie = tournament.id === '1';
-                      const teamNames = [
-                        '雷霆俱乐部', '飞羽协会', '厦大校友', '集大羽协', '华大羽社', '福大羽协', '卡猫羽队', '同心羽球',
-                        '龙岩羽协', '泉州羽社', '漳州羽协', '宁德羽社', '嘉庚羽队', '诚毅羽协', '阳光羽球', '协和羽社'
-                      ];
-                      const players = isYuxie ? 
-                        ['郭靖', '安塞龙', '李宗伟', '林丹', '谌龙', '周杰', '李强', '王五', '赵六', '陈平', '张三', '李四', '王小二', '赵大宝', '陈小明', '周小红'] :
-                        ['翔骏羽队', '友巨集团', '厦门大学', '集美大学', '华侨大学', '福州大学', '卡猫一队', '同心俱乐部', '龙岩学院', '泉州师范', '漳州师大', '宁德师范', '嘉庚学院', '诚毅学院', '阳光学院', '协和学院'];
-                      
-                      return Array.from({ length: 8 }).map((_, i) => {
-                        const topWins = true; // All top players win for consistency
-                        const matchCode = isYuxie ? `男单${2001 + i}` : `男团100${i + 1}`;
-                        const matchTime = `14:${(i * 20).toString().padStart(2, '0')}`;
-                        const courtNum = (i % 8) + 1;
-                        const matchNum = 1;
-                        const p1Name = players[i * 2];
-                        const p2Name = players[i * 2 + 1];
-                        const p1Team = isYuxie ? teamNames[i * 2] : '';
-                        const p2Team = isYuxie ? teamNames[i * 2 + 1] : '';
-                        
-                        // Scores as arrays for vertical alignment
-                        const s1 = topWins ? ['21', '21'] : ['18', '15'];
-                        const s2 = !topWins ? ['21', '21'] : ['18', '15'];
-
-                        return (
-                          <div key={i} className="relative flex items-center">
-                            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden w-[200px] z-10">
-                              <div className="bg-slate-50/50 px-2 py-1 border-b border-slate-50 flex justify-between items-center">
-                                <span className="text-[8px] font-black text-brand-primary uppercase tracking-wider">{matchCode}</span>
-                                <span className="text-[7px] font-bold text-slate-400">8月15日 {matchTime} | {courtNum}号场 第{matchNum}场</span>
-                              </div>
-                              <div className="p-2 space-y-2">
-                                {/* Player 1 */}
-                                <div className={cn("flex justify-between items-center gap-2", !topWins && "opacity-40")}>
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
-                                      <img src={`https://picsum.photos/seed/${p1Name}/100/100`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                    </div>
-                                    <div className="flex flex-col min-w-0">
-                                      <span className="text-[10px] font-bold text-slate-800 truncate">{i * 2 + 1}. {p1Name}</span>
-                                      {p1Team && <span className="text-[7px] text-slate-400 truncate">{p1Team}</span>}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 shrink-0 min-w-[40px] justify-end">
-                                    {s1.map((s, idx) => (
-                                      <span key={idx} className="text-[10px] font-black text-slate-600 tabular-nums w-4 text-center">{s}</span>
-                                    ))}
-                                    {topWins && <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-emerald-500 text-white text-[7px] font-black flex items-center justify-center rounded-full shrink-0">胜</span>}
-                                  </div>
-                                </div>
-                                <div className="h-[1px] bg-slate-50" />
-                                {/* Player 2 */}
-                                <div className={cn("flex justify-between items-center gap-2", topWins && "opacity-40")}>
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
-                                      <img src={`https://picsum.photos/seed/${p2Name}/100/100`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                    </div>
-                                    <div className="flex flex-col min-w-0">
-                                      <span className="text-[10px] font-bold text-slate-800 truncate">{i * 2 + 2}. {p2Name}</span>
-                                      {p2Team && <span className="text-[7px] text-slate-400 truncate">{p2Team}</span>}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 shrink-0 min-w-[40px] justify-end">
-                                    {s2.map((s, idx) => (
-                                      <span key={idx} className="text-[10px] font-black text-slate-600 tabular-nums w-4 text-center">{s}</span>
-                                    ))}
-                                    {!topWins && <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-emerald-500 text-white text-[7px] font-black flex items-center justify-center rounded-full shrink-0">胜</span>}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            {/* Connector Line */}
-                            <div className="flex-1 h-[2px] bg-slate-200 relative">
-                              {i % 2 === 0 ? (
-                                <div className="absolute right-0 top-0 w-[2px] h-[36px] bg-slate-200" />
-                              ) : (
-                                <div className="absolute right-0 bottom-0 w-[2px] h-[36px] bg-slate-200" />
-                              )}
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
+                <div className="min-w-[1000px]">
+                  {/* Aligned Headers */}
+                  <div className="flex gap-8 mb-8 sticky top-0 bg-white z-20 py-4 border-b border-slate-50">
+                    {['16进8', '8进4', '半决赛', '决赛'].map(round => (
+                      <div key={round} className="flex-1 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
+                        {round}
+                      </div>
+                    ))}
                   </div>
 
-                  {/* 8进4 */}
-                  <div className="flex-1 space-y-4 pt-10">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">8进4</div>
-                    {(() => {
-                      const isYuxie = tournament.id === '1';
-                      const teamNames = [
-                        '雷霆俱乐部', '厦大校友', '华大羽社', '卡猫羽队', '龙岩羽协', '漳州羽协', '嘉庚羽队', '阳光羽球'
-                      ];
-                      const winners = isYuxie ? 
-                        ['郭靖', '李宗伟', '谌龙', '李强', '赵六', '张三', '王小二', '陈小明'] :
-                        ['翔骏羽队', '友巨集团', '厦门大学', '集美大学', '华侨大学', '福州大学', '卡猫一队', '同心俱乐部'];
-                      
-                      const winnerPositions = [1, 3, 5, 7, 9, 11, 13, 15];
-                      
-                      return Array.from({ length: 4 }).map((_, i) => {
-                        const topWins = (i === 0 || i === 2) ? false : true; // 2009: Li Zongwei wins, 2011: Zhang San wins
-                        const matchCode = isYuxie ? `男单${2009 + i}` : `男团200${i + 1}`;
-                        const matchTime = `16:${(i * 30).toString().padStart(2, '0')}`;
-                        const courtNum = (i % 4) + 1;
-                        const matchNum = 2;
-                        const p1Name = winners[i * 2];
-                        const p2Name = winners[i * 2 + 1];
-                        const p1Pos = winnerPositions[i * 2];
-                        const p2Pos = winnerPositions[i * 2 + 1];
-                        const p1Team = isYuxie ? teamNames[i * 2] : '';
-                        const p2Team = isYuxie ? teamNames[i * 2 + 1] : '';
+                  <div className="flex gap-8">
+                    {/* 16进8 */}
+                    <div className="flex-1 space-y-4">
+                      {(() => {
+                        const isYuxie = tournament.id === '1';
+                        const teamNames = [
+                          '雷霆俱乐部', '飞羽协会', '厦大校友', '集大羽协', '华大羽社', '福大羽协', '卡猫羽队', '同心羽球',
+                          '龙岩羽协', '泉州羽社', '漳州羽协', '宁德羽社', '嘉庚羽队', '诚毅羽协', '阳光羽球', '协和羽社'
+                        ];
+                        const players = isYuxie ? 
+                          ['郭靖', '安塞龙', '李宗伟', '林丹', '谌龙', '周杰', '李强', '王五', '赵六', '陈平', '张三', '李四', '王小二', '赵大宝', '陈小明', '周小红'] :
+                          ['翔骏羽队', '友巨集团', '厦门大学', '集美大学', '华侨大学', '福州大学', '卡猫一队', '同心俱乐部', '龙岩学院', '泉州师范', '漳州师大', '宁德师范', '嘉庚学院', '诚毅学院', '阳光学院', '协和学院'];
                         
-                        const isFinished = i < 2;
-                        const s1 = isFinished ? (topWins ? ['21', '21'] : ['14', '12']) : [];
-                        const s2 = isFinished ? (!topWins ? ['21', '21'] : ['14', '12']) : [];
+                        return Array.from({ length: 8 }).map((_, i) => {
+                          const topWins = true; 
+                          const matchCode = isYuxie ? `男单${2001 + i}` : `男团100${i + 1}`;
+                          const matchTime = `14:${(i * 20).toString().padStart(2, '0')}`;
+                          const courtNum = (i % 8) + 1;
+                          const matchNum = 1;
+                          const p1Name = players[i * 2];
+                          const p2Name = players[i * 2 + 1];
+                          const p1Team = isYuxie ? teamNames[i * 2] : '';
+                          const p2Team = isYuxie ? teamNames[i * 2 + 1] : '';
+                          
+                          const s1 = topWins ? ['21', '21'] : ['18', '15'];
+                          const s2 = !topWins ? ['21', '21'] : ['18', '15'];
+                          
+                          const matchDetail = MOCK_MATCH_DETAILS[matchCode];
 
-                        return (
-                          <div key={i} className="relative flex items-center min-h-[144px]">
-                            {!isFinished ? (
-                              <div className="bg-slate-50/50 rounded-xl border border-dashed border-slate-200 w-[200px] h-[84px] flex flex-col items-center justify-center z-10 gap-1">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{matchCode}</span>
-                                <span className="text-[7px] font-bold text-slate-300">8月15日 {matchTime} | {courtNum}号场 第{matchNum}场</span>
-                              </div>
-                            ) : (
+                          return (
+                            <div key={i} className="relative flex items-center h-[84px]">
                               <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden w-[200px] z-10">
                                 <div className="bg-slate-50/50 px-2 py-1 border-b border-slate-50 flex justify-between items-center">
-                                  <span className="text-[8px] font-black text-brand-primary uppercase tracking-wider">{matchCode}</span>
-                                  <span className="text-[7px] font-bold text-slate-400">8月15日 {matchTime} | {courtNum}号场 第{matchNum}场</span>
+                                  <button 
+                                    onClick={() => {
+                                      if (matchDetail) {
+                                        setSelectedMatchDetail(matchDetail);
+                                        setShowMatchDetailModal(true);
+                                      }
+                                    }}
+                                    className="text-[8px] font-black text-brand-primary uppercase tracking-wider hover:underline"
+                                  >
+                                    {matchCode}
+                                  </button>
+                                  <span className="text-[7px] font-bold text-slate-400">8月15日 {matchTime}</span>
                                 </div>
-                                <div className="p-2 space-y-2">
+                                <div className="p-2 space-y-1">
                                   <div className={cn("flex justify-between items-center gap-2", !topWins && "opacity-40")}>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
-                                        <img src={`https://picsum.photos/seed/${p1Name}/100/100`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                      </div>
-                                      <div className="flex flex-col min-w-0">
-                                        <span className="text-[10px] font-bold text-slate-800 truncate">{p1Pos}. {p1Name}</span>
-                                        {p1Team && <span className="text-[7px] text-slate-400 truncate">{p1Team}</span>}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0 min-w-[40px] justify-end">
-                                      {s1.map((s, idx) => (
-                                        <span key={idx} className="text-[10px] font-black text-slate-600 tabular-nums w-4 text-center">{s}</span>
-                                      ))}
-                                      {topWins && <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-emerald-500 text-white text-[7px] font-black flex items-center justify-center rounded-full shrink-0">胜</span>}
+                                    <span className="text-[10px] font-bold text-slate-800 truncate flex-1">{p1Name}</span>
+                                    <div className="flex gap-1">
+                                      <span className="text-[9px] font-black text-slate-600 w-6 text-center">{matchDetail ? matchDetail.scoreA : s1[0]}</span>
                                     </div>
                                   </div>
-                                  <div className="h-[1px] bg-slate-50" />
                                   <div className={cn("flex justify-between items-center gap-2", topWins && "opacity-40")}>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
-                                        <img src={`https://picsum.photos/seed/${p2Name}/100/100`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                      </div>
-                                      <div className="flex flex-col min-w-0">
-                                        <span className="text-[10px] font-bold text-slate-800 truncate">{p2Pos}. {p2Name}</span>
-                                        {p2Team && <span className="text-[7px] text-slate-400 truncate">{p2Team}</span>}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0 min-w-[40px] justify-end">
-                                      {s2.map((s, idx) => (
-                                        <span key={idx} className="text-[10px] font-black text-slate-600 tabular-nums w-4 text-center">{s}</span>
-                                      ))}
-                                      {!topWins && <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-emerald-500 text-white text-[7px] font-black flex items-center justify-center rounded-full shrink-0">胜</span>}
+                                    <span className="text-[10px] font-bold text-slate-800 truncate flex-1">{p2Name}</span>
+                                    <div className="flex gap-1">
+                                      <span className="text-[9px] font-black text-slate-600 w-6 text-center">{matchDetail ? matchDetail.scoreB : s2[0]}</span>
                                     </div>
                                   </div>
                                 </div>
                               </div>
-                            )}
-                            {/* Connector Line */}
-                            <div className="flex-1 h-[2px] bg-slate-200 relative">
-                              {i % 2 === 0 ? (
-                                <div className="absolute right-0 top-0 w-[2px] h-[72px] bg-slate-200" />
-                              ) : (
-                                <div className="absolute right-0 bottom-0 w-[2px] h-[72px] bg-slate-200" />
-                              )}
+                              {/* Connector Line */}
+                              <div className="flex-1 h-[2px] bg-slate-200 relative">
+                                {i % 2 === 0 ? (
+                                  <div className="absolute right-0 top-0 w-[2px] h-[50px] bg-slate-200" />
+                                ) : (
+                                  <div className="absolute right-0 bottom-0 w-[2px] h-[50px] bg-slate-200" />
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
+                          );
+                        });
+                      })()}
+                    </div>
 
-                  {/* 半决赛 */}
-                  <div className="flex-1 space-y-4 pt-24">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">半决赛</div>
-                    {(() => {
-                      const isYuxie = tournament.id === '1';
-                      return Array.from({ length: 2 }).map((_, i) => {
-                        const matchCode = isYuxie ? `男单${2013 + i}` : `男团300${i + 1}`;
-                        const matchTime = `18:00`;
-                        const courtNum = i + 1;
-                        const matchNum = 3;
-                        return (
-                          <div key={i} className="relative flex items-center h-[288px]">
-                            <div className="bg-slate-50/50 rounded-xl border border-dashed border-slate-200 w-[200px] h-[84px] flex flex-col items-center justify-center z-10 gap-1">
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{matchCode}</span>
-                              <span className="text-[7px] font-bold text-slate-300">8月15日 {matchTime} | {courtNum}号场 第{matchNum}场</span>
-                            </div>
-                            {/* Connector Line */}
-                            <div className="flex-1 h-[2px] bg-slate-200 relative">
-                              {i % 2 === 0 ? (
-                                <div className="absolute right-0 top-0 w-[2px] h-[144px] bg-slate-200" />
-                              ) : (
-                                <div className="absolute right-0 bottom-0 w-[2px] h-[144px] bg-slate-200" />
-                              )}
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
+                    {/* 8进4 */}
+                    <div className="flex-1 space-y-[116px] pt-[50px]">
+                      {(() => {
+                        const isYuxie = tournament.id === '1';
+                        const winners = isYuxie ? 
+                          ['郭靖', '李宗伟', '谌龙', '李强', '赵六', '张三', '王小二', '陈小明'] :
+                          ['翔骏羽队', '友巨集团', '厦门大学', '集美大学', '华侨大学', '福州大学', '卡猫一队', '同心俱乐部'];
+                        
+                        return Array.from({ length: 4 }).map((_, i) => {
+                          const topWins = (i === 0 || i === 2) ? false : true;
+                          const matchCode = isYuxie ? `男单${2009 + i}` : `男团200${i + 1}`;
+                          const matchTime = `16:${(i * 30).toString().padStart(2, '0')}`;
+                          const p1Name = winners[i * 2];
+                          const p2Name = winners[i * 2 + 1];
+                          
+                          const isFinished = i < 2;
+                          const s1 = isFinished ? (topWins ? ['21', '21'] : ['14', '12']) : [];
+                          const s2 = isFinished ? (!topWins ? ['21', '21'] : ['14', '12']) : [];
+                          
+                          const matchDetail = MOCK_MATCH_DETAILS[matchCode];
 
-                  {/* 决赛 */}
-                  <div className="flex-1 space-y-4 pt-56">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">决赛</div>
-                    <div className="h-[576px] flex items-center">
-                      <div className="w-8 h-[2px] bg-slate-200" />
-                      <div className="bg-slate-800/90 rounded-2xl border border-slate-700 p-8 flex flex-col items-center justify-center shadow-2xl min-w-[200px] z-10">
-                        <div className="w-12 h-12 rounded-full bg-brand-primary/20 flex items-center justify-center mb-4">
-                          <Trophy className="w-6 h-6 text-brand-primary" />
+                          return (
+                            <div key={i} className="relative flex items-center h-[84px]">
+                              <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden w-[200px] z-10">
+                                <div className="bg-slate-50/50 px-2 py-1 border-b border-slate-50 flex justify-between items-center">
+                                  <button 
+                                    onClick={() => {
+                                      if (matchDetail) {
+                                        setSelectedMatchDetail(matchDetail);
+                                        setShowMatchDetailModal(true);
+                                      }
+                                    }}
+                                    className="text-[8px] font-black text-brand-primary uppercase tracking-wider hover:underline"
+                                  >
+                                    {matchCode}
+                                  </button>
+                                  <span className="text-[7px] font-bold text-slate-400">8月15日 {matchTime}</span>
+                                </div>
+                                <div className="p-2 space-y-1">
+                                  <div className={cn("flex justify-between items-center gap-2", isFinished && !topWins && "opacity-40")}>
+                                    <span className="text-[10px] font-bold text-slate-800 truncate flex-1">{p1Name}</span>
+                                    <div className="flex gap-1">
+                                      <span className="text-[9px] font-black text-slate-600 w-6 text-center">{matchDetail ? matchDetail.scoreA : (s1[0] || '-')}</span>
+                                    </div>
+                                  </div>
+                                  <div className={cn("flex justify-between items-center gap-2", isFinished && topWins && "opacity-40")}>
+                                    <span className="text-[10px] font-bold text-slate-800 truncate flex-1">{p2Name}</span>
+                                    <div className="flex gap-1">
+                                      <span className="text-[9px] font-black text-slate-600 w-6 text-center">{matchDetail ? matchDetail.scoreB : (s2[0] || '-')}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              {/* Connector Line */}
+                              <div className="flex-1 h-[2px] bg-slate-200 relative">
+                                {i % 2 === 0 ? (
+                                  <div className="absolute right-0 top-0 w-[2px] h-[100px] bg-slate-200" />
+                                ) : (
+                                  <div className="absolute right-0 bottom-0 w-[2px] h-[100px] bg-slate-200" />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+
+                    {/* 半决赛 */}
+                    <div className="flex-1 space-y-[316px] pt-[150px]">
+                      {(() => {
+                        const isYuxie = tournament.id === '1';
+                        const semiFinalists = isYuxie ? ['李宗伟', '李强', '张三', '陈小明'] : ['友巨集团', '集美大学', '福州大学', '同心俱乐部'];
+                        return Array.from({ length: 2 }).map((_, i) => {
+                          const matchCode = isYuxie ? `男单${2013 + i}` : `男团300${i + 1}`;
+                          const matchDetail = MOCK_MATCH_DETAILS[matchCode];
+                          return (
+                            <div key={i} className="relative flex items-center h-[84px]">
+                              <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden w-[200px] z-10">
+                                <div className="bg-slate-50/50 px-2 py-1 border-b border-slate-50 flex justify-between items-center">
+                                  <button 
+                                    onClick={() => {
+                                      if (matchDetail) {
+                                        setSelectedMatchDetail(matchDetail);
+                                        setShowMatchDetailModal(true);
+                                      }
+                                    }}
+                                    className="text-[8px] font-black text-brand-primary uppercase tracking-wider hover:underline"
+                                  >
+                                    {matchCode}
+                                  </button>
+                                  <span className="text-[7px] font-bold text-slate-400">8月15日 18:00</span>
+                                </div>
+                                <div className="p-2 space-y-1">
+                                  <div className="flex justify-between items-center gap-2">
+                                    <span className="text-[10px] font-bold text-slate-800 truncate flex-1">{semiFinalists[i * 2]}</span>
+                                    <span className="text-[9px] font-black text-slate-600 w-6 text-center">{matchDetail ? matchDetail.scoreA : '-'}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center gap-2">
+                                    <span className="text-[10px] font-bold text-slate-800 truncate flex-1">{semiFinalists[i * 2 + 1]}</span>
+                                    <span className="text-[9px] font-black text-slate-600 w-6 text-center">{matchDetail ? matchDetail.scoreB : '-'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              {/* Connector Line */}
+                              <div className="flex-1 h-[2px] bg-slate-200 relative">
+                                {i % 2 === 0 ? (
+                                  <div className="absolute right-0 top-0 w-[2px] h-[200px] bg-slate-200" />
+                                ) : (
+                                  <div className="absolute right-0 bottom-0 w-[2px] h-[200px] bg-slate-200" />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+
+                    {/* 决赛 */}
+                    <div className="flex-1 pt-[350px]">
+                      <div className="flex items-center h-[84px]">
+                        <div className="w-8 h-[2px] bg-slate-200" />
+                        <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 flex flex-col items-center justify-center shadow-2xl min-w-[200px] z-10">
+                          <Trophy className="w-6 h-6 text-brand-primary mb-2" />
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest mb-1">冠军争夺战</span>
+                          <span className="text-[8px] font-bold text-slate-500">8月15日 20:00</span>
                         </div>
-                        <span className="text-xs font-black text-white uppercase tracking-[0.2em] mb-2">决赛</span>
-                        <span className="text-[10px] font-black text-brand-primary mb-2">{tournament.id === '1' ? '男单2015' : '男团4001'}</span>
-                        <span className="text-[8px] font-bold text-slate-500">8月15日 20:00 | 1号场 第1场</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Consolation Match (3rd/4th) */}
+                  <div className="mt-20 pt-12 border-t border-slate-100">
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-left mb-8">附加赛 (3、4名决赛)</div>
+                    <div className="flex justify-start">
+                      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden w-[240px]">
+                        <div className="bg-slate-50/50 px-3 py-2 border-b border-slate-50 flex justify-between items-center">
+                          <button 
+                            onClick={() => {
+                              const detail = MOCK_MATCH_DETAILS['男团1001']; // Mocking for demo
+                              if (detail) {
+                                setSelectedMatchDetail({ ...detail, code: '季军赛' });
+                                setShowMatchDetailModal(true);
+                              }
+                            }}
+                            className="text-[9px] font-black text-brand-primary uppercase tracking-wider hover:underline"
+                          >
+                            季军赛
+                          </button>
+                          <span className="text-[8px] font-bold text-slate-400">8月15日 19:30 | 2号场</span>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <div className="flex justify-between items-center gap-3">
+                            <div className="flex items-center gap-2 flex-1">
+                              <div className="w-6 h-6 rounded-full bg-slate-100 overflow-hidden">
+                                <img src="https://picsum.photos/seed/p3/100/100" alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              </div>
+                              <span className="text-xs font-bold text-slate-800">半决赛负者 A</span>
+                            </div>
+                            <span className="text-xs font-black text-slate-600">72</span>
+                          </div>
+                          <div className="h-[1px] bg-slate-50" />
+                          <div className="flex justify-between items-center gap-3">
+                            <div className="flex items-center gap-2 flex-1">
+                              <div className="w-6 h-6 rounded-full bg-slate-100 overflow-hidden">
+                                <img src="https://picsum.photos/seed/p4/100/100" alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              </div>
+                              <span className="text-xs font-bold text-slate-800">半决赛负者 B</span>
+                            </div>
+                            <span className="text-xs font-black text-slate-600">45</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -10765,6 +10952,101 @@ const TournamentLiveView = ({ tournament, onBack }: { tournament: Tournament, on
             )}
           </div>
         )}
+
+        {/* Match Detail Modal */}
+        <AnimatePresence>
+          {showMatchDetailModal && selectedMatchDetail && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowMatchDetailModal(false)}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden"
+              >
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                  <h3 className="text-lg font-black text-slate-800">详细比分</h3>
+                  <button 
+                    onClick={() => setShowMatchDetailModal(false)}
+                    className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5 text-slate-400" />
+                  </button>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                      <tr>
+                        <th className="px-6 py-4">出场顺序</th>
+                        <th className="px-6 py-4 text-center">{selectedMatchDetail.teamA}</th>
+                        <th className="px-6 py-4 text-center">{selectedMatchDetail.scoreA}:{selectedMatchDetail.scoreB}</th>
+                        <th className="px-6 py-4 text-center">{selectedMatchDetail.teamB}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {selectedMatchDetail.subMatches.map((sub: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-slate-800">{sub.order}</span>
+                              {sub.time && <span className="text-[10px] text-slate-400">{sub.time}</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col items-center gap-1">
+                              {sub.playersA.map((p: string, pIdx: number) => (
+                                <div key={pIdx} className="flex items-center gap-2">
+                                  <span className="text-slate-600 font-medium">{p}</span>
+                                  <span className="text-[10px] font-black text-slate-400">{sub.scoresA[pIdx]}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="inline-flex items-center justify-center px-3 py-1 bg-slate-100 rounded-full text-[11px] font-black text-slate-600">
+                              {sub.subScore}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col items-center gap-1">
+                              {sub.playersB.map((p: string, pIdx: number) => (
+                                <div key={pIdx} className="flex items-center gap-2">
+                                  <span className="text-slate-600 font-medium">{p}</span>
+                                  <span className="text-[10px] font-black text-slate-400">{sub.scoresB[pIdx]}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-center">
+                  <div className="flex items-center gap-8">
+                    <div className="text-center">
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">总分</div>
+                      <div className="text-3xl font-black text-slate-800">{selectedMatchDetail.scoreA}</div>
+                    </div>
+                    <div className="text-2xl font-black text-slate-200">:</div>
+                    <div className="text-center">
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">总分</div>
+                      <div className="text-3xl font-black text-slate-800">{selectedMatchDetail.scoreB}</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {activeTab === 'my-matches' && (
           <div className="space-y-6">
@@ -11798,7 +12080,10 @@ export default function App() {
     gender: 'MALE',
     birthDate: '1990-01-01',
     clothingSize: 'L',
-    address: '厦门市思明区体育中心'
+    address: '厦门市思明区体育中心',
+    tags: [],
+    position: '职员',
+    isLeader: false
   });
 
   const handleSaveProfile = (profile: ParticipantInfo) => {

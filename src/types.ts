@@ -25,7 +25,7 @@ export interface Tournament {
   matchStartTime: string;
   matchEndTime: string;
   location: string;
-  status: 'registration' | 'ongoing' | 'finished';
+  status: 'registration' | 'scheduling' | 'ongoing' | 'finished';
   type: 'Individual' | 'Team' | 'Comprehensive';
   image: string;
   participants: number;
@@ -137,6 +137,8 @@ export interface ParticipantInfo {
   signature?: string;
   photo?: string;
   tags?: string[];
+  position?: string;
+  isLeader?: boolean;
 }
 
 export interface Venue {
