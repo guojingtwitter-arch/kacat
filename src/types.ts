@@ -141,6 +141,21 @@ export interface ParticipantInfo {
   isLeader?: boolean;
 }
 
+export interface GameActivity {
+  id: string;
+  title: string;
+  time: string;
+  venueName: string;
+  venueImage?: string;
+  organizer: string;
+  maleCount: number;
+  femaleCount: number;
+  maxParticipants: number;
+  fee: number;
+  status: 'registration' | 'full' | 'finished';
+  type: string; // e.g. "进阶局", "新手局"
+}
+
 export interface Venue {
   id: string;
   name: string;
@@ -156,6 +171,8 @@ export interface Venue {
   facilities: string[];
   description: string;
   bookingType: 'platform' | 'mini-program' | 'phone';
+  businessHours: string;
+  activities?: GameActivity[];
 }
 
 export interface TimeSlot {

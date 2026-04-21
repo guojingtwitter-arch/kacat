@@ -107,7 +107,7 @@ const MOCK_MATCH_DETAILS: Record<string, any> = {
     ]
   }
 };
-import type { Tournament, Match, ParticipantInfo, IDType, Gender, ClothingSize, Venue, TimeSlot, PartnerRequest, TeamInfo, UniformInfo } from './types';
+import type { Tournament, Match, ParticipantInfo, IDType, Gender, ClothingSize, Venue, TimeSlot, PartnerRequest, TeamInfo, UniformInfo, GameActivity } from './types';
 
 const getRegistrationCountdown = (endTime: string) => {
   try {
@@ -389,6 +389,65 @@ const MOCK_TEAMS: TeamInfo[] = [
   }
 ];
 
+const MOCK_GAMES: GameActivity[] = [
+  {
+    id: 'g1',
+    title: '思明区晚间进阶3U/4U双打',
+    time: '2026-04-25 19:00 - 21:00',
+    venueName: '卡猫羽毛球馆 (思明店)',
+    venueImage: 'https://picsum.photos/seed/venue1/400/300',
+    organizer: '雷霆羽毛球俱乐部',
+    maleCount: 4,
+    femaleCount: 2,
+    maxParticipants: 8,
+    fee: 35,
+    status: 'registration',
+    type: '进阶局'
+  },
+  {
+    id: 'g2',
+    title: '周末集美区新手友好/纯练球',
+    time: '2026-04-26 14:00 - 16:00',
+    venueName: '悦动羽毛球中心',
+    venueImage: 'https://picsum.photos/seed/venue3/400/300',
+    organizer: '李大雷',
+    maleCount: 1,
+    femaleCount: 1,
+    maxParticipants: 4,
+    fee: 25,
+    status: 'registration',
+    type: '新手局'
+  },
+  {
+    id: 'g3',
+    title: '湖里区混双约战 欢迎挑战',
+    time: '2026-04-27 20:00 - 22:00',
+    venueName: '冠军羽毛球训练基地',
+    venueImage: 'https://picsum.photos/seed/venue2/400/300',
+    organizer: '陈美美',
+    maleCount: 2,
+    femaleCount: 2,
+    maxParticipants: 4,
+    fee: 45,
+    status: 'full',
+    type: '对抗局'
+  },
+  {
+    id: 'g4',
+    title: '思明区午后休闲局',
+    time: '2026-04-25 14:00 - 16:00',
+    venueName: '卡猫羽毛球馆 (思明店)',
+    venueImage: 'https://picsum.photos/seed/venue1/400/301',
+    organizer: '闲逛羽球',
+    maleCount: 2,
+    femaleCount: 2,
+    maxParticipants: 8,
+    fee: 20,
+    status: 'registration',
+    type: '娱乐局'
+  }
+];
+
 const MOCK_VENUES: Venue[] = [
   {
     id: 'v1',
@@ -404,7 +463,9 @@ const MOCK_VENUES: Venue[] = [
     phone: '0592-1234567',
     facilities: ['空调', '淋浴', '免费停车', '更衣室', '自动售货机'],
     description: '卡猫羽毛球馆思明店位于市中心，交通便利。场馆采用专业羽毛球塑胶地板，光线柔和，是您运动健身的理想选择。',
-    bookingType: 'platform'
+    bookingType: 'platform',
+    businessHours: '09:00 - 22:00',
+    activities: [MOCK_GAMES[0], MOCK_GAMES[3]]
   },
   {
     id: 'v2',
@@ -420,7 +481,9 @@ const MOCK_VENUES: Venue[] = [
     phone: '0592-7654321',
     facilities: ['专业塑胶', '夜间照明', '观众席', 'VIP休息室'],
     description: '冠军羽毛球训练基地是厦门市规模最大的羽毛球场馆之一，曾多次举办省级羽毛球赛事。场馆设施齐全，环境优雅。',
-    bookingType: 'mini-program'
+    bookingType: 'mini-program',
+    businessHours: '08:00 - 23:00',
+    activities: [MOCK_GAMES[2]]
   },
   {
     id: 'v3',
@@ -436,7 +499,9 @@ const MOCK_VENUES: Venue[] = [
     phone: '0592-5556666',
     facilities: ['学生优惠', '器材租借', '饮水机', '急救箱'],
     description: '悦动羽毛球中心位于集美学村附近，深受学生群体喜爱。价格亲民，服务周到，提供专业的器材租借服务。',
-    bookingType: 'phone'
+    bookingType: 'phone',
+    businessHours: '09:00 - 21:00',
+    activities: [MOCK_GAMES[1]]
   }
 ];
 
@@ -1029,6 +1094,60 @@ const LiveScorePage = () => {
   );
 };
 
+const GameActivityCard: React.FC<{ game: GameActivity }> = ({ game }) => (
+  <div 
+    className="bg-white rounded-[24px] p-3 card-shadow border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500 flex gap-4"
+  >
+    <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 relative">
+      <img src={game.venueImage || "https://picsum.photos/seed/venue/400/300"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm text-white text-[8px] font-black rounded-md">
+        {game.type}
+      </div>
+    </div>
+
+    <div className="flex-1 flex flex-col justify-between py-0.5">
+      <div>
+        <div className="flex justify-between items-start">
+          <h4 className="text-xs font-black text-slate-900 line-clamp-1 flex-1 leading-tight">{game.title}</h4>
+          <div className="text-brand-primary font-black ml-2 whitespace-nowrap">
+            <span className="text-[9px]">¥</span>
+            <span className="text-sm">{game.fee}</span>
+          </div>
+        </div>
+        
+        <div className="mt-1.5 space-y-1">
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+            <Clock size={10} className="text-slate-400" />
+            <span className="line-clamp-1">{game.time}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+            <MapPin size={10} className="text-slate-400" />
+            <span className="line-clamp-1">{game.venueName}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-50">
+        <div className="flex items-center gap-2">
+          <div className="flex -space-x-1.5">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="w-5 h-5 rounded-full border-2 border-white bg-slate-100 overflow-hidden">
+                <img src={`https://picsum.photos/seed/${game.id + i}/100/100`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              </div>
+            ))}
+          </div>
+          <span className="text-[9px] font-bold text-slate-400">
+            {game.maleCount}男{game.femaleCount}女 / {game.maxParticipants}人
+          </span>
+        </div>
+        <button className="px-3 py-1 bg-brand-primary text-white text-[9px] font-black rounded-full shadow-lg shadow-brand-primary/20 active:scale-95 transition-all">
+          报名
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 const VenueDetailPage = ({ venue, onBack, onBook }: { venue: Venue, onBack: () => void, onBook: () => void }) => {
   return (
     <div className="flex flex-col h-[100dvh] bg-slate-50 overflow-hidden">
@@ -1040,101 +1159,106 @@ const VenueDetailPage = ({ venue, onBack, onBook }: { venue: Venue, onBack: () =
       </header>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="space-y-6 pb-12">
-          {/* Venue Image */}
-          <div className="w-full aspect-video overflow-hidden">
-            <img src={venue.image} alt={venue.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+        <div className="space-y-6 pb-24">
+          {/* Venue Images Showcase */}
+          <div className="relative h-64 w-full bg-slate-900">
+            <img src={venue.image} alt={venue.name} className="w-full h-full object-cover opacity-90" referrerPolicy="no-referrer" />
+            <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] font-bold">
+              1 / 5
+            </div>
           </div>
 
-          <div className="px-4 space-y-6">
-            {/* Basic Info */}
-            <div className="bg-white rounded-2xl p-5 card-shadow space-y-4">
+          <div className="px-4 space-y-6 -mt-12 relative z-10">
+            {/* Main Info Card */}
+            <div className="bg-white rounded-[32px] p-6 card-shadow space-y-6 border border-slate-100">
               <div>
-                <h2 className="text-xl font-black text-slate-900">{venue.name}</h2>
-                <div className="flex items-center gap-2 text-xs text-slate-400 mt-2">
-                  <MapPin size={14} className="text-brand-primary" />
-                  <span>{venue.address}</span>
+                <div className="flex justify-between items-start gap-4">
+                  <h2 className="text-xl font-black text-slate-900">{venue.name}</h2>
+                  <div className="px-3 py-1 bg-brand-primary/5 text-brand-primary text-[10px] font-black rounded-full border border-brand-primary/10 whitespace-nowrap">
+                    营业中
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-400 mt-2">
-                  <Phone size={14} className="text-brand-primary" />
-                  <span>{venue.phone}</span>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mt-3 bg-slate-50 p-3 rounded-2xl">
+                  <Clock size={14} className="text-brand-primary" />
+                  <span>营业时间：{venue.businessHours}</span>
+                </div>
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                    <MapPin size={14} className="text-brand-primary" />
+                    <span className="line-clamp-1">{venue.address}</span>
+                  </div>
+                  <button className="p-2 bg-emerald-50 text-emerald-600 rounded-xl active:scale-95 transition-all">
+                    <Navigation size={18} />
+                  </button>
                 </div>
               </div>
 
               <div className="flex gap-2 flex-wrap">
                 {venue.tags.map(tag => (
-                  <span key={tag} className="text-[10px] font-bold bg-brand-primary/5 text-brand-primary px-2 py-1 rounded-md">
+                  <span key={tag} className="text-[10px] font-black bg-slate-50 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-100">
                     {tag}
                   </span>
                 ))}
               </div>
 
-              <div className="flex flex-col gap-3 pt-2">
-                <div className="flex gap-3">
-                  <button className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-600 text-xs font-black flex items-center justify-center gap-2 border border-slate-100 active:bg-slate-100 transition-all">
-                    <Navigation size={16} /> 导航
-                  </button>
-                  <button 
-                    onClick={() => {
-                      alert(`正在拨打: ${venue.phone}`);
-                      window.location.href = `tel:${venue.phone}`;
-                    }}
-                    className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-600 text-xs font-black flex items-center justify-center gap-2 border border-slate-100 active:bg-slate-100 transition-all"
-                  >
-                    <PhoneCall size={16} /> 联系
-                  </button>
-                </div>
-              </div>
             </div>
 
-            {/* Facilities */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <div className="w-1 h-4 bg-brand-primary rounded-full" />
-                服务设施
-              </h3>
-              <div className="grid grid-cols-4 gap-3">
-                {venue.facilities.map(facility => (
-                  <div key={facility} className="flex flex-col items-center gap-2 p-3 bg-white rounded-2xl border border-slate-100">
-                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                      <CheckCircle2 size={16} />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-600">{facility}</span>
-                  </div>
+            {/* Facilities Section */}
+            <div className="bg-white rounded-[32px] p-6 card-shadow border border-slate-100">
+               <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">场馆设施</h3>
+               <div className="grid grid-cols-4 gap-4">
+                 {venue.facilities.map(f => (
+                   <div key={f} className="flex flex-col items-center gap-2">
+                     <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
+                       <Zap size={18} />
+                     </div>
+                     <span className="text-[9px] font-bold text-slate-500">{f}</span>
+                   </div>
+                 ))}
+               </div>
+            </div>
+
+            {/* Activities Section */}
+            {venue.activities && venue.activities.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">本馆球局 ({venue.activities.length})</h3>
+                  <button className="text-[10px] font-bold text-brand-primary">全部局</button>
+                </div>
+                {venue.activities.map(game => (
+                  <GameActivityCard key={game.id} game={game} />
                 ))}
               </div>
-            </div>
+            )}
 
-            {/* Description */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <div className="w-1 h-4 bg-brand-primary rounded-full" />
-                球馆介绍
-              </h3>
-              <div className="bg-white rounded-2xl p-4 border border-slate-100">
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  {venue.description}
-                </p>
-              </div>
+            {/* Description Section */}
+            <div className="bg-white rounded-[32px] p-6 card-shadow border border-slate-100">
+               <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">场馆介绍</h3>
+               <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                 {venue.description}
+               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="w-full max-w-md mx-auto p-4 bg-white border-t border-slate-100 safe-bottom flex items-center justify-between gap-4 z-50">
-        <button
-          onClick={onBook}
-          className="w-full py-4 rounded-2xl bg-brand-primary text-white text-sm font-black shadow-lg shadow-brand-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2"
-        >
-          {venue.bookingType === 'platform' ? (
-            <>场地预订 <Calendar size={18} /></>
-          ) : venue.bookingType === 'mini-program' ? (
-            <>小程序预订 <ArrowUpRight size={18} /></>
-          ) : (
-            <>电话预订 <Phone size={18} /></>
-          )}
-        </button>
+      {/* Booking Fixed Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-50">
+        <div className="max-w-md mx-auto flex items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-400 uppercase">场地价格</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-black text-brand-primary">¥{venue.price}</span>
+              <span className="text-[10px] font-black text-slate-400">/小时起</span>
+            </div>
+          </div>
+          <button 
+            onClick={onBook}
+            className="flex-1 py-4 bg-brand-primary text-white rounded-[24px] font-black text-sm shadow-xl shadow-brand-primary/30 active:scale-95 transition-all"
+          >
+            立即预订球场
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2385,6 +2509,10 @@ const SportsMapPage = ({ onBack, onSelectVenue }: { onBack: () => void, onSelect
 };
 
 const PlayPage = ({ onBack, onBookingVenue }: { onBack: () => void, onBookingVenue: (venue?: Venue) => void }) => {
+  const [activeTab, setActiveTab] = useState<'sessions' | 'venues'>('sessions');
+  const [sessionSort, setSessionSort] = useState<'default' | 'nearest' | 'price_low'>('default');
+  const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'tomorrow' | 'weekend'>('all');
+  const [distanceFilter, setDistanceFilter] = useState<'near' | '1km' | '3km' | '5km'>('near');
   const [venueSort, setVenueSort] = useState<'distance' | 'price'>('distance');
   const [showFilter, setShowFilter] = useState(false);
   const [showAISearch, setShowAISearch] = useState(false);
@@ -2406,7 +2534,7 @@ const PlayPage = ({ onBack, onBookingVenue }: { onBack: () => void, onBookingVen
   if (activeSubPage === 'map') return <SportsMapPage onBack={() => setActiveSubPage(null)} onSelectVenue={(v) => onBookingVenue(v)} />;
 
   return (
-    <div className="pb-20 bg-slate-50 min-h-screen">
+    <div className="pb-24 bg-slate-50 min-h-screen">
       <header className="bg-white px-4 pt-12 pb-4 flex items-center gap-4 border-b border-slate-100 sticky top-0 z-50 w-full max-w-md">
         <button onClick={onBack} className="p-2 rounded-full hover:bg-slate-100">
           <ChevronRight size={20} className="rotate-180" />
@@ -2456,92 +2584,102 @@ const PlayPage = ({ onBack, onBookingVenue }: { onBack: () => void, onBookingVen
           ))}
         </div>
 
-        {/* Ad Banner */}
-        <div className="relative rounded-3xl overflow-hidden aspect-[3/1] bg-slate-900 shadow-xl">
-          <img 
-            src="https://picsum.photos/seed/new_venue/1200/400" 
-            alt="New Venue" 
-            className="w-full h-full object-cover opacity-70"
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute inset-0 p-6 flex flex-col justify-center">
-            <span className="text-brand-primary text-[8px] font-black uppercase tracking-widest mb-1">最新开业</span>
-            <h3 className="text-white text-sm font-black leading-tight">卡猫羽毛球馆 (湖里旗舰店)<br/>盛大开业，全场5折起</h3>
+        {/* Tab & Filters Container */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pb-2">
+          {/* Tab Selection */}
+          <div className="flex p-1 bg-slate-100 rounded-2xl flex-shrink-0">
+            <button 
+              onClick={() => setActiveTab('sessions')}
+              className={cn(
+                "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                activeTab === 'sessions' ? "bg-white text-brand-primary shadow-sm" : "text-slate-400"
+              )}
+            >
+              球局
+            </button>
+            <button 
+              onClick={() => setActiveTab('venues')}
+              className={cn(
+                "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                activeTab === 'venues' ? "bg-white text-brand-primary shadow-sm" : "text-slate-400"
+              )}
+            >
+              场馆
+            </button>
           </div>
-        </div>
 
-        {/* Venue List Section */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-black text-slate-900">羽毛球馆</h3>
-            <div className="flex items-center gap-3">
-              <div className="flex bg-slate-100 p-1 rounded-lg">
-                <button 
-                  onClick={() => setVenueSort('distance')}
-                  className={cn(
-                    "px-2 py-1 rounded-md text-[10px] font-bold transition-all",
-                    venueSort === 'distance' ? "bg-white text-brand-primary shadow-sm" : "text-slate-400"
-                  )}
-                >
-                  距离优先
-                </button>
-                <button 
-                  onClick={() => setVenueSort('price')}
-                  className={cn(
-                    "px-2 py-1 rounded-md text-[10px] font-bold transition-all",
-                    venueSort === 'price' ? "bg-white text-brand-primary shadow-sm" : "text-slate-400"
-                  )}
-                >
-                  价格优选
-                </button>
-              </div>
-              <button 
-                onClick={() => setShowFilter(true)}
-                className="p-2 bg-white border border-slate-100 rounded-lg text-slate-400 hover:text-brand-primary transition-colors"
-              >
-                <Filter size={16} />
+          {/* Quick Filters */}
+          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+            <div className="relative group">
+              <button className="flex items-center gap-1 px-3 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-bold text-slate-600 shadow-sm active:scale-95 transition-all">
+                {distanceFilter === 'near' ? '附近' : distanceFilter}
+                <ChevronDown size={10} />
+              </button>
+            </div>
+
+            <div className="relative group">
+              <button className="flex items-center gap-1 px-3 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-bold text-slate-600 shadow-sm active:scale-95 transition-all">
+                {sessionSort === 'default' ? '默认排序' : (sessionSort === 'nearest' ? '离我最近' : '价格最低')}
+                <ChevronDown size={10} />
+              </button>
+            </div>
+
+            <div className="relative group">
+              <button className="flex items-center gap-1 px-3 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-bold text-slate-600 shadow-sm active:scale-95 transition-all">
+                {timeFilter === 'all' ? '全部时间' : '选择时间'}
+                <ChevronDown size={10} />
               </button>
             </div>
           </div>
+        </div>
 
-          <div className="space-y-4">
-            {sortedVenues.map((venue) => (
-              <div 
-                key={venue.id} 
-                onClick={() => onBookingVenue(venue)}
-                className="bg-white rounded-[32px] p-3 flex gap-4 card-shadow border border-slate-100 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <div className="w-28 h-28 rounded-2xl overflow-hidden flex-shrink-0">
-                  <img src={venue.image} alt={venue.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </div>
-                <div className="flex flex-col justify-between py-1 flex-grow">
-                  <div>
-                    <h4 className="text-sm font-black text-slate-900 line-clamp-1">{venue.name}</h4>
-                    <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
-                      <MapPin size={10} />
-                      <span>{venue.address}</span>
+        {/* Content Section */}
+        <div className="space-y-4">
+          {activeTab === 'sessions' ? (
+            <div className="space-y-4">
+              {MOCK_GAMES.map((game) => (
+                <GameActivityCard key={game.id} game={game} />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedVenues.map((venue) => (
+                <div 
+                  key={venue.id} 
+                  onClick={() => onBookingVenue(venue)}
+                  className="bg-white rounded-[32px] p-3 flex gap-4 card-shadow border border-slate-100 active:scale-[0.98] transition-all cursor-pointer animate-in fade-in slide-in-from-right-4 duration-500"
+                >
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0">
+                    <img src={venue.image} alt={venue.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  </div>
+                  <div className="flex flex-col justify-between py-1 flex-grow">
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900 line-clamp-1">{venue.name}</h4>
+                      <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
+                        <MapPin size={10} />
+                        <span className="truncate max-w-[150px]">{venue.address}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-brand-primary font-bold mt-1">
+                        <Activity size={10} />
+                        <span>{venue.activities?.length || 0} 个正在进行的球局</span>
+                      </div>
                     </div>
-                    <div className="flex gap-1 mt-2">
-                      {venue.tags.slice(0, 2).map(tag => (
-                        <span key={tag} className="text-[8px] font-bold bg-slate-50 text-slate-400 px-1.5 py-0.5 rounded border border-slate-100">{tag}</span>
-                      ))}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <Navigation size={10} className="text-emerald-500" />
+                        <span className="text-[10px] text-slate-400 font-bold">{venue.distance}</span>
+                      </div>
+                      <div className="text-brand-primary">
+                        <span className="text-[10px] font-bold">¥</span>
+                        <span className="text-sm font-black">{venue.price}</span>
+                        <span className="text-[8px] font-bold text-slate-400 ml-0.5">/时起</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <MapPin size={10} className="text-slate-400" />
-                      <span className="text-[10px] text-slate-400">{venue.distance}</span>
-                    </div>
-                    <div className="text-brand-primary">
-                      <span className="text-[10px] font-bold">¥</span>
-                      <span className="text-sm font-black">{venue.price}</span>
-                      <span className="text-[8px] font-bold text-slate-400 ml-0.5">/小时</span>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -5797,40 +5935,40 @@ const TournamentDetailPage = ({ tournament, onBack, onRegister }: { tournament: 
 
     // Mock participant pool for filtering
     const individualPool = [
-      { id: 1, project: '男单', group: 'A组', players: [{ name: '林丹', gender: '男', age: '42' }] },
-      { id: 2, project: '男单', group: 'B组', players: [{ name: '谌龙', gender: '男', age: '37' }] },
-      { id: 3, project: '男单', group: 'A组', players: [{ name: '李宗伟', gender: '男', age: '43' }] },
-      { id: 4, project: '男双', group: 'A组', players: [{ name: '蔡赟', gender: '男', age: '46' }, { name: '傅海峰', gender: '男', age: '42' }] },
-      { id: 6, project: '男双', group: 'B组', players: [{ name: '李龙大', gender: '男', age: '37' }, { name: '郑在成', gender: '男', age: '43' }] },
-      { id: 8, project: '女单', group: 'A组', players: [{ name: '王仪涵', gender: '女', age: '38' }] },
-      { id: 9, project: '女单', group: 'A组', players: [{ name: '马琳', gender: '女', age: '32' }] },
-      { id: 10, project: '女双', group: 'A组', players: [{ name: '于洋', gender: '女', age: '39' }, { name: '王晓理', gender: '女', age: '37' }] },
-      { id: 12, project: '混双', group: 'A组', players: [{ name: '张楠', gender: '男', age: '36' }, { name: '赵芸蕾', gender: '女', age: '39' }] },
-      { id: 14, project: '男单', group: 'C组', players: [{ name: '张三', gender: '男', age: '25' }] },
-      { id: 15, project: '女单', group: 'D组', players: [{ name: '李四', gender: '女', age: '22' }] },
-      { id: 16, project: '男单', group: 'A组', players: [{ name: '王五', gender: '男', age: '28' }] },
-      { id: 17, project: '男单', group: 'A组', players: [{ name: '赵六', gender: '男', age: '31' }] },
-      { id: 18, project: '男单', group: 'A组', players: [{ name: '孙七', gender: '男', age: '24' }] },
-      { id: 19, project: '男单', group: 'A组', players: [{ name: '周八', gender: '男', age: '29' }] },
-      { id: 20, project: '男单', group: 'A组', players: [{ name: '吴九', gender: '男', age: '27' }] },
-      { id: 21, project: '男单', group: 'A组', players: [{ name: '郑十', gender: '男', age: '30' }] },
-      { id: 22, project: '男单', group: 'A组', players: [{ name: '陈十一', gender: '男', age: '26' }] },
-      { id: 23, project: '男单', group: 'A组', players: [{ name: '林十二', gender: '男', age: '32' }] },
-      { id: 24, project: '男双', group: 'B组', players: [{ name: '郭靖', gender: '男', age: '35' }, { name: '杨康', gender: '男', age: '34' }] },
-      { id: 25, project: '混双', group: 'B组', players: [{ name: '郭靖', gender: '男', age: '35' }, { name: '黄蓉', gender: '女', age: '33' }] },
-      { id: 26, project: '男单', group: 'B组', players: [{ name: '杨过', gender: '男', age: '24' }] },
-      { id: 27, project: '女单', group: 'B组', players: [{ name: '小龙女', gender: '女', age: '22' }] },
-      { id: 28, project: '男单', group: 'C组', players: [{ name: '张无忌', gender: '男', age: '26' }] },
-      { id: 29, project: '女单', group: 'C组', players: [{ name: '赵敏', gender: '女', age: '24' }] },
-      { id: 30, project: '女单', group: 'C组', players: [{ name: '周芷若', gender: '女', age: '23' }] },
-      { id: 31, project: '男双', group: 'C组', players: [{ name: '萧峰', gender: '男', age: '38' }, { name: '虚竹', gender: '男', age: '34' }] },
-      { id: 33, project: '男单', group: 'D组', players: [{ name: '段誉', gender: '男', age: '28' }] },
-      { id: 34, project: '女单', group: 'D组', players: [{ name: '王语嫣', gender: '女', age: '26' }] },
-      { id: 35, project: '男单', group: 'D组', players: [{ name: '令狐冲', gender: '男', age: '30' }] },
-      { id: 36, project: '女单', group: 'D组', players: [{ name: '任盈盈', gender: '女', age: '28' }] },
-      { id: 37, project: '男单', group: 'A组', players: [{ name: '石破天', gender: '男', age: '22' }] },
-      { id: 38, project: '男双', group: 'D组', players: [{ name: '丁不三', gender: '男', age: '65' }, { name: '丁不四', gender: '男', age: '63' }] },
-      { id: 40, project: '男单', group: 'D组', players: [{ name: '张三丰', gender: '男', age: '70' }] },
+      { id: 1, project: '男单', group: 'A组', teamName: '厦门体育学院', shortName: '厦体', players: [{ name: '林丹', gender: '男', age: '42' }] },
+      { id: 2, project: '男单', group: 'B组', teamName: '福州大学羽协', shortName: '福大羽协', players: [{ name: '谌龙', gender: '男', age: '37' }] },
+      { id: 3, project: '男单', group: 'A组', teamName: '马来西亚羽协', shortName: '马羽协', players: [{ name: '李宗伟', gender: '男', age: '43' }] },
+      { id: 4, project: '男双', group: 'A组', teamName: '国家队一队', shortName: '国羽一队', players: [{ name: '蔡赟', gender: '男', age: '46' }, { name: '傅海峰', gender: '男', age: '42' }] },
+      { id: 6, project: '男双', group: 'B组', teamName: '韩国国家队', shortName: '韩羽', players: [{ name: '李龙大', gender: '男', age: '37' }, { name: '郑在成', gender: '男', age: '43' }] },
+      { id: 8, project: '女单', group: 'A组', teamName: '国家队二队', shortName: '国羽二队', players: [{ name: '王仪涵', gender: '女', age: '38' }] },
+      { id: 9, project: '女单', group: 'A组', teamName: '西班牙羽协', shortName: '西羽协', players: [{ name: '马琳', gender: '女', age: '32' }] },
+      { id: 10, project: '女双', group: 'A组', teamName: '国家队一队', shortName: '国羽一队', players: [{ name: '于洋', gender: '女', age: '39' }, { name: '王晓理', gender: '女', age: '37' }] },
+      { id: 12, project: '混双', group: 'A组', teamName: '国家队一队', shortName: '国羽一队', players: [{ name: '张楠', gender: '男', age: '36' }, { name: '赵芸蕾', gender: '女', age: '39' }] },
+      { id: 14, project: '男单', group: 'C组', teamName: '思明羽协', shortName: '思明羽协', players: [{ name: '张三', gender: '男', age: '25' }] },
+      { id: 15, project: '女单', group: 'D组', teamName: '湖里羽协', shortName: '湖里羽协', players: [{ name: '李四', gender: '女', age: '22' }] },
+      { id: 16, project: '男单', group: 'A组', teamName: '集美大学', shortName: '集大', players: [{ name: '王五', gender: '男', age: '28' }] },
+      { id: 17, project: '男单', group: 'A组', teamName: '华侨大学', shortName: '华大', players: [{ name: '赵六', gender: '男', age: '31' }] },
+      { id: 18, project: '男单', group: 'A组', teamName: '厦门大学', shortName: '厦大', players: [{ name: '孙七', gender: '男', age: '24' }] },
+      { id: 19, project: '男单', group: 'A组', teamName: '同安羽协', shortName: '同安羽协', players: [{ name: '周八', gender: '男', age: '29' }] },
+      { id: 20, project: '男单', group: 'A组', teamName: '翔安羽协', shortName: '翔安羽协', players: [{ name: '吴九', gender: '男', age: '27' }] },
+      { id: 21, project: '男单', group: 'A组', teamName: '海沧羽协', shortName: '海沧羽协', players: [{ name: '郑十', gender: '男', age: '30' }] },
+      { id: 22, project: '男单', group: 'A组', teamName: '卡猫俱乐部', shortName: '卡猫', players: [{ name: '陈十一', gender: '男', age: '26' }] },
+      { id: 23, project: '男单', group: 'A组', teamName: '友巨集团', shortName: '友巨', players: [{ name: '林十二', gender: '男', age: '32' }] },
+      { id: 24, project: '男双', group: 'B组', teamName: '终南山羽协', shortName: '终南山', players: [{ name: '郭靖', gender: '男', age: '35' }, { name: '杨康', gender: '男', age: '34' }] },
+      { id: 25, project: '混双', group: 'B组', teamName: '桃花岛羽协', shortName: '桃花岛', players: [{ name: '郭靖', gender: '男', age: '35' }, { name: '黄蓉', gender: '女', age: '33' }] },
+      { id: 26, project: '男单', group: 'B组', teamName: '古墓派', shortName: '古墓派', players: [{ name: '杨过', gender: '男', age: '24' }] },
+      { id: 27, project: '女单', group: 'B组', teamName: '古墓派', shortName: '古墓派', players: [{ name: '小龙女', gender: '女', age: '22' }] },
+      { id: 28, project: '男单', group: 'C组', teamName: '明教', shortName: '明教', players: [{ name: '张无忌', gender: '男', age: '26' }] },
+      { id: 29, project: '女单', group: 'C组', teamName: '汝阳王府', shortName: '汝阳王府', players: [{ name: '赵敏', gender: '女', age: '24' }] },
+      { id: 30, project: '女单', group: 'C组', teamName: '峨眉派', shortName: '峨眉派', players: [{ name: '周芷若', gender: '女', age: '23' }] },
+      { id: 31, project: '男双', group: 'C组', teamName: '丐帮', shortName: '丐帮', players: [{ name: '萧峰', gender: '男', age: '38' }, { name: '虚竹', gender: '男', age: '34' }] },
+      { id: 33, project: '男单', group: 'D组', teamName: '大理段氏', shortName: '大理段氏', players: [{ name: '段誉', gender: '男', age: '28' }] },
+      { id: 34, project: '女单', group: 'D组', teamName: '曼陀山庄', shortName: '曼陀山庄', players: [{ name: '王语嫣', gender: '女', age: '26' }] },
+      { id: 35, project: '男单', group: 'D组', teamName: '华山派', shortName: '华山派', players: [{ name: '令狐冲', gender: '男', age: '30' }] },
+      { id: 36, project: '女单', group: 'D组', teamName: '日月神教', shortName: '日月神教', players: [{ name: '任盈盈', gender: '女', age: '28' }] },
+      { id: 37, project: '男单', group: 'A组', teamName: '侠客岛', shortName: '侠客岛', players: [{ name: '石破天', gender: '男', age: '22' }] },
+      { id: 38, project: '男双', group: 'D组', teamName: '丁家庄', shortName: '丁家庄', players: [{ name: '丁不三', gender: '男', age: '65' }, { name: '丁不四', gender: '男', age: '63' }] },
+      { id: 40, project: '男单', group: 'D组', teamName: '武当派', shortName: '武当派', players: [{ name: '张三丰', gender: '男', age: '70' }] },
     ];
 
     const teamPool = [
@@ -5959,17 +6097,15 @@ const TournamentDetailPage = ({ tournament, onBack, onRegister }: { tournament: 
                 {isTeamTournament ? (
                   <>
                     <div className="flex items-center text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
-                      <span className="w-10">序号</span>
                       <span className="flex-1">队伍全称</span>
-                      <span className="w-20 text-center">队伍简称</span>
+                      <span className="w-24 text-center">队伍简称</span>
                       <span className="w-16 text-right">报名人数</span>
                     </div>
                     {filteredParticipants.length > 0 ? (
                       filteredParticipants.map((p: any, idx) => (
                         <div key={idx} className="flex items-center text-xs py-3 border-b border-slate-50 last:border-0">
-                          <span className="w-10 text-slate-400 font-bold">{idx + 1}</span>
                           <span className="flex-1 font-bold text-slate-700">{p.teamName}</span>
-                          <span className="w-20 text-slate-400 text-center">{p.shortName}</span>
+                          <span className="w-24 text-slate-400 text-center">{p.shortName}</span>
                           <span className="w-16 text-slate-400 text-right font-bold">{p.memberCount}人</span>
                         </div>
                       ))
@@ -5982,29 +6118,35 @@ const TournamentDetailPage = ({ tournament, onBack, onRegister }: { tournament: 
                 ) : (
                   <>
                     <div className="flex items-center text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
-                      <span className="w-10">序号</span>
-                      <span className="flex-1">姓名</span>
-                      <span className="w-12 text-center">性别</span>
-                      <span className="w-12 text-right">年龄</span>
+                      <span className="w-16">姓名</span>
+                      <span className="w-10 text-center">性别</span>
+                      <span className="w-10 text-center">年龄</span>
+                      <span className="flex-1 text-center">队伍全称</span>
+                      <span className="w-20 text-right">队伍简称</span>
                     </div>
                     {filteredParticipants.length > 0 ? (
                       filteredParticipants.map((p: any, idx) => (
                         <div key={idx} className="flex items-start text-xs py-2 border-b border-slate-50 last:border-0">
-                          <span className="w-10 text-slate-400 font-bold mt-0.5">{idx + 1}</span>
-                          <div className="flex-1 flex flex-col gap-1">
+                          <div className="w-16 flex flex-col gap-1">
                             {p.players.map((player: any, pIdx: number) => (
                               <span key={pIdx} className="font-bold text-slate-700">{player.name}</span>
                             ))}
                           </div>
-                          <div className="w-12 flex flex-col items-center gap-1">
+                          <div className="w-10 flex flex-col items-center gap-1">
                             {p.players.map((player: any, pIdx: number) => (
                               <span key={pIdx} className="text-slate-400">{player.gender}</span>
                             ))}
                           </div>
-                          <div className="w-12 flex flex-col items-end gap-1">
+                          <div className="w-10 flex flex-col items-center gap-1">
                             {p.players.map((player: any, pIdx: number) => (
-                              <span key={pIdx} className="text-slate-400">{player.age}岁</span>
+                              <span key={pIdx} className="text-slate-400">{player.age}</span>
                             ))}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700 font-medium">
+                            {p.teamName}
+                          </div>
+                          <div className="w-20 text-right text-slate-400">
+                            {p.shortName}
                           </div>
                         </div>
                       ))
@@ -6169,12 +6311,14 @@ const TournamentDetailPage = ({ tournament, onBack, onRegister }: { tournament: 
             )}>
               {tournament.status === 'registration' ? '正在报名' : tournament.status === 'scheduling' ? '编排中' : tournament.status === 'ongoing' ? '比赛中' : '已结束'}
             </span>
-            <div className="flex items-center gap-1 text-slate-400">
-              <User size={14} />
-              <span className="text-xs font-medium">
-                {`${tournament.participants}人已报名 / 限额${tournament.maxParticipants || 500}人`}
-              </span>
-            </div>
+            {tournament.status === 'registration' && (
+              <div className="flex items-center gap-1 text-slate-400">
+                <User size={14} />
+                <span className="text-xs font-medium">
+                  {`${tournament.participants}人已报名 / 限额${tournament.maxParticipants || 500}人`}
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 rounded-full bg-slate-50 text-slate-400 hover:text-brand-primary transition-colors">
@@ -11753,16 +11897,22 @@ const MemberJoinPage: React.FC<{
 }> = ({ team, tournament, onBack, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
+    name: '张小凡',
+    phone: '13812345678',
     idType: 'ID_CARD' as IDType,
-    idNumber: '',
+    idNumber: '350101199505201234',
     gender: 'MALE' as Gender,
-    birthDate: '',
+    birthDate: '1995-05-20',
     clothingSize: 'L' as ClothingSize
   });
   const [isSigned, setIsSigned] = useState(false);
+
+  // Calculate current team stats
+  const maleCount = team.members.filter(m => m.gender === 'MALE').length;
+  const femaleCount = team.members.filter(m => m.gender === 'FEMALE').length;
+  const totalCount = team.members.length;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -11771,28 +11921,188 @@ const MemberJoinPage: React.FC<{
     setIsSubmitting(true);
     setTimeout(() => {
       setShowSuccess(true);
-      onSuccess();
-    }, 1500);
+      // We don't call onSuccess() yet so user can see their place in the team
+    }, 1200);
+  };
+
+  const renderTeamDashboard = (isPostJoin: boolean = false) => {
+    const displayMembers = isPostJoin 
+      ? [...team.members, { ...formData, photo: '' }] as ParticipantInfo[]
+      : team.members;
+    
+    const dMaleCount = isPostJoin ? (formData.gender === 'MALE' ? maleCount + 1 : maleCount) : maleCount;
+    const dFemaleCount = isPostJoin ? (formData.gender === 'FEMALE' ? femaleCount + 1 : femaleCount) : femaleCount;
+    const dTotalCount = isPostJoin ? totalCount + 1 : totalCount;
+
+    return (
+      <div className="space-y-4">
+        {/* Tournament & Team Main Card */}
+        <div className="bg-white rounded-[32px] p-6 card-shadow border border-slate-100 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 rounded-full -translate-y-12 translate-x-12 blur-3xl opacity-50" />
+          
+          <div className="flex items-center gap-4 mb-6 relative">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-slate-50 flex-shrink-0">
+              <img src={team.logo || "https://picsum.photos/seed/team/200/200"} alt={team.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-black text-slate-900 truncate mb-1">{team.name}</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full uppercase tracking-wider italic">
+                  {team.shortName || "Mixed Team"}
+                </span>
+                <span className="text-[10px] font-bold text-brand-primary">#{tournament.id === '6' ? '同心杯' : '团体赛'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-50/80 rounded-[24px] border border-slate-100/50 mb-6 group transition-colors hover:bg-white hover:border-brand-primary/20">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">正在报名赛事</p>
+            <p className="text-xs font-black text-slate-900 leading-snug">{tournament.title}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-blue-50/50 rounded-[24px] border border-blue-100/50">
+              <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">报名组别</p>
+              <p className="text-xs font-black text-blue-600 truncate">
+                {tournament.id === '6' ? '甲组混合团体赛' : (tournament.categories[0]?.name || '默认组别')}
+              </p>
+            </div>
+            <div className="p-4 bg-emerald-50/50 rounded-[24px] border border-emerald-100/50">
+              <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">当前领队</p>
+              <p className="text-xs font-black text-emerald-600 truncate">{team.leader?.name || "未设置"}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Dashboard - Compact Version */}
+        <div className="bg-slate-900 rounded-[24px] p-5 text-white card-shadow relative overflow-hidden">
+           <div className="absolute bottom-0 right-0 w-20 h-20 bg-brand-primary/10 rounded-full blur-2xl translate-y-8 translate-x-8" />
+           
+           <div className="flex justify-between items-center relative z-10">
+             <div className="flex items-center gap-4">
+               <div className="flex flex-col">
+                 <p className="text-[9px] font-black opacity-40 uppercase tracking-[0.2em] mb-0.5">已报名</p>
+                 <div className="flex items-baseline gap-1">
+                   <span className="text-2xl font-black text-brand-primary">{dTotalCount}</span>
+                   <span className="text-[10px] font-black opacity-30">/ 8</span>
+                 </div>
+               </div>
+               <div className="h-8 w-px bg-white/10 mx-1" />
+               <div className="flex gap-4">
+                 <div className="text-center">
+                    <p className="text-[8px] font-black opacity-40 uppercase tracking-widest mb-0.5">男</p>
+                    <p className="text-xs font-black">{dMaleCount}</p>
+                 </div>
+                 <div className="text-center">
+                    <p className="text-[8px] font-black opacity-40 uppercase tracking-widest mb-0.5">女</p>
+                    <p className="text-xs font-black">{dFemaleCount}</p>
+                 </div>
+               </div>
+             </div>
+
+             <div className="flex-1 max-w-[100px] ml-4">
+               {/* Small Dynamic Progress Indicator */}
+               <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-[1px] border border-white/5 mb-1">
+                 <motion.div 
+                   initial={{ width: 0 }}
+                   animate={{ width: `${(dTotalCount / 8) * 100}%` }}
+                   className="h-full bg-brand-primary rounded-full"
+                 />
+               </div>
+               <p className="text-[7px] font-bold opacity-30 text-right uppercase tracking-tighter">Capacity</p>
+             </div>
+           </div>
+           
+           {tournament.id === '6' && (
+             <div className="mt-3 pt-3 border-t border-white/5">
+                <p className="text-[8px] font-bold opacity-30 flex items-center gap-1">
+                  <Info size={10} /> 组委会建议包含 3 名女性队员以满足要求
+                </p>
+             </div>
+           )}
+        </div>
+
+        {/* Member Grid */}
+        <div className="bg-white rounded-[32px] p-6 card-shadow border border-slate-100">
+           <div className="flex items-center justify-between mb-6">
+             <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">已报名队员</h3>
+             <span className="text-[10px] font-black text-brand-primary bg-brand-primary/5 px-2 py-0.5 rounded-full">
+               {totalCount} / 32 限额
+             </span>
+           </div>
+           
+           <div className="grid grid-cols-4 gap-y-6 gap-2">
+             {displayMembers.map((m, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 group transition-all">
+                  <div className="w-12 h-12 rounded-full ring-2 ring-white ring-offset-2 ring-offset-slate-50 overflow-hidden shadow-sm relative group-hover:scale-105 active:scale-95 transition-all">
+                    <img 
+                      src={m.photo || `https://picsum.photos/seed/${m.name}/100/100`} 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className={cn(
+                      "absolute inset-0 bg-gradient-to-t opacity-40",
+                      m.gender === 'MALE' ? "from-blue-500" : "from-pink-500"
+                    )} />
+                    <div className={cn(
+                      "absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center text-[7px] font-black text-white",
+                      m.gender === 'MALE' ? "bg-blue-500" : "bg-pink-500"
+                    )}>
+                      {m.gender === 'MALE' ? 'M' : 'F'}
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-black text-slate-600 truncate w-full text-center group-hover:text-brand-primary transition-colors">
+                    {m.name}
+                  </span>
+                </div>
+             ))}
+             {displayMembers.length < 8 && (
+               <div className="flex flex-col items-center gap-2 animate-pulse">
+                 <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
+                   <Plus size={16} />
+                 </div>
+                 <span className="text-[9px] font-bold text-slate-300 uppercase">Wait</span>
+               </div>
+             )}
+           </div>
+        </div>
+      </div>
+    );
   };
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6"
-        >
-          <CheckCircle2 size={40} className="text-green-600" />
-        </motion.div>
-        <h2 className="text-2xl font-black text-slate-900 mb-2">报名成功</h2>
-        <p className="text-slate-500 mb-8">您已成功加入 {team.name} 并完成报名</p>
-        <button
-          onClick={onBack}
-          className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold"
-        >
-          返回首页
-        </button>
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        {/* Animated Success Banner */}
+        <div className="bg-white pt-12 pb-8 px-6 text-center border-b border-slate-100 flex flex-col items-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-green-500 opacity-[0.02]" />
+          <motion.div
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            className="w-20 h-20 bg-emerald-500 rounded-[24px] shadow-2xl shadow-emerald-200 flex items-center justify-center mb-4 text-white relative z-10"
+          >
+            <Check size={40} strokeWidth={4} />
+          </motion.div>
+          <h2 className="text-2xl font-black text-slate-900 mb-1 relative z-10 tracking-tight">报名提交成功!</h2>
+          <p className="text-xs font-bold text-slate-400 relative z-10">您的信息已入库，欢迎加入团队</p>
+        </div>
+        
+        <div className="p-4 flex-1 space-y-4">
+           <div className="px-2 pt-2">
+             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">加入后的队伍动态</h3>
+           </div>
+           
+           {renderTeamDashboard(true)}
+
+           <div className="py-8">
+             <button
+               onClick={onBack}
+               className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black shadow-2xl shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-3"
+             >
+               <HomeIcon size={18} /> 返回赛事首页
+             </button>
+           </div>
+        </div>
       </div>
     );
   }
@@ -11800,259 +12110,180 @@ const MemberJoinPage: React.FC<{
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
-      <div className="bg-white px-4 py-4 flex items-center gap-4 border-b border-slate-100 sticky top-0 z-10">
-        <button onClick={onBack} className="p-2 -ml-2 text-slate-400">
-          <ChevronLeft size={24} />
+      <div className="bg-white px-4 py-6 flex items-center gap-4 border-b border-slate-100 sticky top-0 z-50">
+        <button 
+          onClick={showForm ? () => setShowForm(false) : onBack} 
+          className="p-2 -ml-2 rounded-full hover:bg-slate-50 transition-colors"
+        >
+          <ChevronLeft size={24} className="text-slate-400" />
         </button>
-        <h1 className="text-lg font-black text-slate-900">填写报名表</h1>
+        <div>
+          <h1 className="text-lg font-black text-slate-900 leading-none mb-1">
+            {showForm ? '填写个人报名表' : '加入队伍'}
+          </h1>
+          <p className="text-[10px] font-bold text-slate-400 tracking-wider">STEP {showForm ? '02' : '01'} / COMPLETE</p>
+        </div>
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Team & Tournament Info Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl p-5 card-shadow border border-slate-100"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-50 shadow-sm">
-              <img src={team.logo} alt={team.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            </div>
-            <div>
-              <h2 className="text-sm font-black text-slate-900">{team.name}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">邀请您加入队伍</p>
-            </div>
-          </div>
+        {!showForm ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-4"
+          >
+             {renderTeamDashboard(false)}
 
-          <div className="bg-slate-50 rounded-2xl p-4">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">正在报名赛事</p>
-            <p className="text-xs font-black text-slate-900 mb-3">
-              {tournament.title}
-            </p>
-            
-            <div className="mb-3 p-2 bg-blue-50 rounded-xl border border-blue-100">
-              <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">团体赛组别</p>
-              <p className="text-[10px] font-bold text-blue-700">
-                {tournament.id === '6' ? '甲组混合团体赛' : (tournament.categories[0]?.name || '默认组别')}
-              </p>
-            </div>
-
-            {tournament.id === '6' && (
-              <div className="mb-3 p-2 bg-orange-50 rounded-xl border border-orange-100">
-                <p className="text-[9px] font-black text-orange-600 uppercase tracking-widest mb-1">报名限制</p>
-                <p className="text-[10px] font-bold text-orange-700">每队 6-8 人，且至少包含 3 名女性队员</p>
-              </div>
-            )}
-
-            <div className="flex justify-between items-center pt-3 border-t border-slate-200/60">
-              <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">领队</p>
-                <p className="text-xs font-bold text-slate-700">{team.leader.name}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
-                  {tournament.id === '6' ? '已报名人数' : '当前人数'}
-                </p>
-                <p className="text-xs font-bold text-slate-700">
-                  {tournament.id === '6' ? (
-                    `已报名 ${team.members.length} 名，男 ${team.members.filter(m => m.gender === 'MALE').length} 女 ${team.members.filter(m => m.gender === 'FEMALE').length}`
-                  ) : (
-                    `${team.members.length} 人`
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-4">
-             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">当前已报名队员</p>
-             <div className="flex flex-wrap gap-1.5">
-               {team.members.map((m, i) => (
-                 <div key={i} className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-lg flex items-center gap-1.5">
-                   <div className="w-3 h-3 rounded-full bg-slate-200 flex items-center justify-center">
-                     <User size={8} className="text-slate-500" />
-                   </div>
-                   <span className="text-[9px] font-bold text-slate-600">{m.name}</span>
-                 </div>
-               ))}
-             </div>
-          </div>
-        </motion.div>
-
-        {/* Registration Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-3xl p-6 card-shadow border border-slate-100"
-        >
-          <h3 className="text-base font-black text-slate-900 mb-6 flex items-center gap-2">
-            <FileText size={18} className="text-brand-primary" />
-            完善个人报名信息
-          </h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1">团体赛组别</label>
-              <input
-                readOnly
-                type="text"
-                value={tournament.id === '6' ? '甲组混合团体赛' : (tournament.categories[0]?.name || '默认组别')}
-                className="w-full px-4 py-3.5 bg-slate-100 border-none rounded-2xl text-sm font-bold text-slate-500"
-              />
-            </div>
-            
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1">姓名</label>
-              <input
-                required
-                type="text"
-                value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                placeholder="请输入真实姓名"
-                className="w-full px-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-brand-primary/20"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1">性别</label>
-                <div className="flex bg-slate-50 rounded-2xl p-1">
-                  {(['MALE', 'FEMALE'] as Gender[]).map(g => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, gender: g })}
-                      className={cn(
-                        "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
-                        formData.gender === g ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
-                      )}
-                    >
-                      {g === 'MALE' ? '男' : '女'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1">出生日期</label>
-                <input
-                  required
-                  type="date"
-                  value={formData.birthDate}
-                  onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
-                  className="w-full px-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-brand-primary/20"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1">手机号码</label>
-                <input
-                  required
-                  type="tel"
-                  value={formData.phone}
-                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="请输入手机号"
-                  className="w-full px-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-brand-primary/20"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1">服装尺码</label>
-                <select
-                  value={formData.clothingSize}
-                  onChange={e => setFormData({ ...formData, clothingSize: e.target.value as ClothingSize })}
-                  className="w-full px-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-brand-primary/20"
-                >
-                  {['S', 'M', 'L', 'XL', '2XL', '3XL'].map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1">证件类型</label>
-              <select
-                value={formData.idType}
-                onChange={e => setFormData({ ...formData, idType: e.target.value as IDType })}
-                className="w-full px-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-brand-primary/20"
-              >
-                <option value="ID_CARD">身份证</option>
-                <option value="PASSPORT">护照</option>
-                <option value="HK_MC_PASS">港澳通行证</option>
-                <option value="TAIWAN_PASS">台胞证</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1">证件号码</label>
-              <input
-                required
-                type="text"
-                value={formData.idNumber}
-                onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
-                placeholder="请输入证件号码"
-                className="w-full px-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-brand-primary/20"
-              />
-            </div>
-
-            {/* Disclaimer */}
-            <div className="pt-4 border-t border-slate-100 mt-6">
-              <h4 className="text-sm font-black text-slate-900 mb-3">自愿参赛责任书</h4>
-              <div className="h-32 overflow-y-auto bg-slate-50 rounded-2xl p-4 mb-4 text-[10px] leading-relaxed text-slate-500 font-medium border border-slate-100">
-                <p className="mb-2">1. 本人自愿参加本次羽毛球比赛，并确认身体健康，无任何不适合参加剧烈运动的疾病。</p>
-                <p className="mb-2">2. 本人充分了解运动过程中可能存在的风险，并愿意承担由此产生的一切后果。</p>
-                <p className="mb-2">3. 赛事组委会已为参赛选手购买意外伤害保险，理赔事宜按保险公司规定执行。</p>
-                <p className="mb-2">4. 本人授权赛事组委会使用本人的姓名、肖像、声音等用于赛事宣传。</p>
-                <p>5. 本人已详细阅读并同意上述所有条款。</p>
-              </div>
-            </div>
-
-            {/* Signature */}
-            <div className="space-y-2 mb-6">
-              <label className="text-xs font-bold text-slate-500 ml-1">请在下方区域手写签字</label>
-              <div className="h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 relative flex items-center justify-center overflow-hidden">
-                {isSigned ? (
-                  <motion.div
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    className="text-slate-900 font-serif italic text-2xl"
-                  >
-                    {formData.name || '您的签字'}
-                  </motion.div>
-                ) : (
-                  <div className="flex flex-col items-center text-slate-300">
-                    <Pencil size={24} className="mb-1 opacity-20" />
-                    <span className="text-[9px] font-bold uppercase tracking-widest">Sign Here</span>
-                  </div>
-                )}
+             <div className="pt-6">
                 <button 
-                  type="button"
-                  onClick={() => setIsSigned(true)}
-                  className="absolute inset-0 w-full h-full cursor-crosshair"
-                />
-              </div>
+                  onClick={() => setShowForm(true)}
+                  className="w-full py-5 bg-brand-primary text-white rounded-[24px] font-black shadow-2xl shadow-brand-primary/20 flex items-center justify-center gap-3 group active:scale-95 transition-all text-sm"
+                >
+                  我要报名
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+             </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="bg-white rounded-[32px] p-6 card-shadow border border-slate-100"
+          >
+            <div className="flex items-center gap-3 mb-8">
+               <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary">
+                 <FileText size={18} />
+               </div>
+               <div>
+                 <h3 className="text-base font-black text-slate-900 leading-tight">完善个人基础信息</h3>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">请准确填写以下字段以完成入队</p>
+               </div>
             </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+               <div className="space-y-4">
+                 <div className="space-y-1.5 px-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                      真实姓名 <Star size={6} className="text-red-400 fill-red-400" />
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="例：张晓凡"
+                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2x border border-transparent focus:ring-4 focus:ring-brand-primary/5 focus:bg-white focus:border-brand-primary/10 rounded-[20px] text-sm font-black transition-all"
+                    />
+                 </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting || !isSigned}
-              className={cn(
-                "w-full py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2",
-                isSigned 
-                  ? "bg-brand-primary text-white shadow-lg shadow-orange-200" 
-                  : "bg-slate-100 text-slate-400"
-              )}
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                "提交报名"
-              )}
-            </button>
-          </form>
-        </motion.div>
+                 <div className="grid grid-cols-2 gap-4 px-1">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">性别</label>
+                      <div className="flex bg-slate-50 rounded-[20px] p-1.5 border border-slate-100">
+                        {(['MALE', 'FEMALE'] as Gender[]).map(g => (
+                          <button
+                            key={g}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, gender: g })}
+                            className={cn(
+                              "flex-1 py-2.5 rounded-[15px] text-[10px] font-black transition-all",
+                              formData.gender === g ? "bg-white text-brand-primary shadow-sm ring-1 ring-slate-100" : "text-slate-400"
+                            )}
+                          >
+                            {g === 'MALE' ? '男' : '女'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">上衣尺码</label>
+                      <div className="relative">
+                        <select
+                          value={formData.clothingSize}
+                          onChange={e => setFormData({ ...formData, clothingSize: e.target.value as ClothingSize })}
+                          className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-[20px] text-xs font-black appearance-none focus:ring-4 focus:ring-brand-primary/5 transition-all outline-none"
+                        >
+                          {['S', 'M', 'L', 'XL', '2XL', '3XL'].map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
+                 </div>
+
+                 <div className="space-y-1.5 px-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">出生日期</label>
+                    <input
+                      required
+                      type="date"
+                      value={formData.birthDate}
+                      onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
+                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-black focus:ring-4 focus:ring-brand-primary/5 transition-all outline-none"
+                    />
+                 </div>
+
+                 <div className="space-y-1.5 px-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">联系电话</label>
+                    <input
+                      required
+                      type="tel"
+                      value={formData.phone}
+                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="请输入手机号码"
+                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-black focus:ring-4 focus:ring-brand-primary/5 transition-all outline-none"
+                    />
+                 </div>
+
+                 <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">签署参赛承诺书</label>
+                      <div className="h-32 bg-slate-50 rounded-[24px] border-2 border-dashed border-slate-200 relative group active:bg-slate-100 transition-colors">
+                        {isSigned ? (
+                          <div className="absolute inset-0 flex items-center justify-center text-slate-900 font-serif italic text-2xl animate-in fade-in zoom-in duration-300">
+                            {formData.name}
+                          </div>
+                        ) : (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 gap-1 opacity-50">
+                            <Pencil size={24} />
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em]">TOUCH TO SIGN</span>
+                          </div>
+                        )}
+                        <button 
+                          type="button"
+                          onClick={() => setIsSigned(true)}
+                          className="absolute inset-0 w-full h-full cursor-crosshair z-10"
+                        />
+                      </div>
+                    </div>
+                 </div>
+               </div>
+
+               <button
+                  type="submit"
+                  disabled={isSubmitting || !isSigned}
+                  className={cn(
+                    "w-full py-5 rounded-[24px] font-black transition-all flex items-center justify-center gap-3 text-sm mt-8 shadow-xl",
+                    isSigned 
+                      ? "bg-brand-primary text-white shadow-brand-primary/20" 
+                      : "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed"
+                  )}
+                >
+                  {isSubmitting ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>确认个人信息，提交报名 <ArrowUpRight size={18} /></>
+                  )}
+               </button>
+               
+               {!isSigned && (
+                 <p className="text-[9px] text-center text-amber-500 font-bold uppercase tracking-wider animate-bounce">
+                    * 请先点击上方虚线框完成电子签名
+                 </p>
+               )}
+            </form>
+          </motion.div>
+        )}
       </div>
     </div>
   );
