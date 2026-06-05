@@ -8,13 +8,9 @@ import {
   CircleDollarSign,
   CreditCard,
   Download,
-  Filter,
   Landmark,
-  LineChart,
-  Package,
   ReceiptText,
   RefreshCw,
-  Search,
   ShoppingBag,
   Store,
   TicketCheck,
@@ -24,8 +20,22 @@ import {
 import { cn } from './types';
 
 type Period = 'today' | 'week' | 'month' | 'custom';
-type StoreId = 'all' | 'north' | 'river' | 'east';
+type StoreId =
+  | 'all'
+  | 'north'
+  | 'river'
+  | 'east'
+  | 'softB'
+  | 'softF'
+  | 'huaqiao'
+  | 'jiageng'
+  | 'lvcuo'
+  | 'dihao'
+  | 'sibei'
+  | 'xianglu'
+  | 'wanda';
 type Tab = 'project' | 'source' | 'payment' | 'store';
+type DashboardType = 'venue' | 'recognition';
 type Project = 'venue' | 'storedCard' | 'courseCard' | 'passCard' | 'goods';
 type Source = 'miniProgram' | 'cashier' | 'meituan' | 'douyin';
 type Payment = 'wechat' | 'payCode' | 'storedBalance' | 'offline' | 'corporate' | 'free' | 'meituanGroup' | 'douyinGroup';
@@ -50,6 +60,19 @@ const stores = [
   { id: 'east', name: '东城综合馆' },
 ] satisfies { id: StoreId; name: string }[];
 
+const fitnessStores = [
+  { id: 'all', name: '全部门店' },
+  { id: 'softB', name: '加减健身（软三B区店）' },
+  { id: 'softF', name: '加减健身（软三F区店）' },
+  { id: 'huaqiao', name: '加减健身（华侨大学店）' },
+  { id: 'jiageng', name: '加减健身（嘉庚体育馆店）' },
+  { id: 'lvcuo', name: '加减健身（吕厝店）' },
+  { id: 'dihao', name: '加减健身（帝豪店）' },
+  { id: 'sibei', name: '加减健身（思北店）' },
+  { id: 'xianglu', name: '加减健身（湖里翔鹭店）' },
+  { id: 'wanda', name: '加减健身（湖里万达店）' },
+] satisfies { id: StoreId; name: string }[];
+
 const periods = [
   { id: 'today', name: '本日', range: '2026-06-03' },
   { id: 'week', name: '本周', range: '2026-06-01 至 2026-06-07' },
@@ -59,15 +82,15 @@ const periods = [
 
 const projectMeta: Record<Project, { name: string; short: string; color: string; icon: typeof Store }> = {
   venue: { name: '场地预订', short: '场地', color: 'bg-cyan-500', icon: CalendarDays },
-  storedCard: { name: '储值卡销售', short: '储值卡', color: 'bg-emerald-500', icon: Wallet },
+  storedCard: { name: '储值卡销售', short: '储值卡', color: 'bg-blue-500', icon: Wallet },
   courseCard: { name: '课程卡销售', short: '课程卡', color: 'bg-indigo-500', icon: TicketCheck },
   passCard: { name: '次卡 / 时间卡销售', short: '次卡时间卡', color: 'bg-amber-500', icon: CreditCard },
   goods: { name: '商品销售（含直接收款）', short: '商品/直接收款', color: 'bg-rose-500', icon: ShoppingBag },
 };
 
 const sourceMeta: Record<Source, { name: string; tag?: string; color: string }> = {
-  miniProgram: { name: '小程序', color: 'bg-green-500' },
-  cashier: { name: '收银台', color: 'bg-slate-700' },
+  miniProgram: { name: '小程序', color: 'bg-blue-500' },
+  cashier: { name: '收银台', color: 'bg-sky-500' },
   meituan: { name: '美团核销', tag: '第三方团购', color: 'bg-yellow-500' },
   douyin: { name: '抖音核销', tag: '第三方团购', color: 'bg-fuchsia-500' },
 };
@@ -109,37 +132,158 @@ const orders: RevenueOrder[] = [
   { id: 'M007', store: 'east', project: 'venue', source: 'douyin', payment: 'douyinGroup', receivable: 62000, discount: 4200, paid: 57800, orders: 233, dateBucket: 'month' },
 ];
 
-const trend = [
-  { label: '05-29', sales: 69300, revenue: 58200, stored: 11100 },
-  { label: '05-30', sales: 74500, revenue: 64200, stored: 10300 },
-  { label: '05-31', sales: 81900, revenue: 70900, stored: 11000 },
-  { label: '06-01', sales: 92600, revenue: 78500, stored: 14100 },
-  { label: '06-02', sales: 98400, revenue: 83900, stored: 14500 },
-  { label: '06-03', sales: 112240, revenue: 104280, stored: 7960 },
+const projectDetailCatalog: Record<Project, { name: string; weight: number }[]> = {
+  passCard: [
+    { name: '单次卡', weight: 0.28 },
+    { name: '10次卡', weight: 0.18 },
+    { name: '月卡', weight: 0.22 },
+    { name: '季卡', weight: 0.17 },
+    { name: '半年卡', weight: 0.08 },
+    { name: '年卡', weight: 0.07 },
+  ],
+  courseCard: [
+    { name: '私教包月卡', weight: 0.28 },
+    { name: '私教5次课', weight: 0.18 },
+    { name: '28天私教瘦身课', weight: 0.22 },
+    { name: '青少年基础课', weight: 0.14 },
+    { name: '成人入门课', weight: 0.1 },
+    { name: '小班提高课', weight: 0.08 },
+  ],
+  storedCard: [
+    { name: '篮球储值卡', weight: 0.28 },
+    { name: '羽毛球储值卡', weight: 0.32 },
+    { name: '游泳储值卡', weight: 0.18 },
+    { name: '通用储值卡', weight: 0.1 },
+    { name: '企业团建储值卡', weight: 0.07 },
+    { name: '亲子运动储值卡', weight: 0.05 },
+  ],
+  venue: [
+    { name: '篮球场', weight: 0.3 },
+    { name: '羽毛球场', weight: 0.36 },
+    { name: '游泳泳道', weight: 0.12 },
+    { name: '综合训练区', weight: 0.08 },
+    { name: '乒乓球台', weight: 0.08 },
+    { name: '多功能教室', weight: 0.06 },
+  ],
+  goods: [
+    { name: '羽毛球拍', weight: 0.24 },
+    { name: '泳衣', weight: 0.18 },
+    { name: '运动饮料', weight: 0.16 },
+    { name: '球线 / 手胶', weight: 0.12 },
+    { name: '泳镜', weight: 0.1 },
+    { name: '直接收款', weight: 0.2 },
+  ],
+};
+
+type RecognitionCardSale = {
+  id: string;
+  member: string;
+  store: Exclude<StoreId, 'all'>;
+  category: 'timeCard' | 'privateCourse' | 'goods';
+  product: string;
+  paidAt: string;
+  paid: number;
+  periods: number;
+  orders: number;
+};
+
+const recognitionCardSales: RecognitionCardSale[] = [
+  { id: 'T101', member: '张航', store: 'softB', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-06-01', paid: 2680, periods: 4, orders: 1 },
+  { id: 'T102', member: '苏晴', store: 'softB', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-06-04', paid: 5200, periods: 3, orders: 1 },
+  { id: 'T103', member: '黄佳怡', store: 'softB', category: 'timeCard', product: '自助训练双月卡', paidAt: '2026-05-26', paid: 1680, periods: 2, orders: 1 },
+  { id: 'T104', member: '许诺', store: 'softF', category: 'timeCard', product: '自助训练月卡', paidAt: '2026-06-02', paid: 980, periods: 1, orders: 1 },
+  { id: 'T105', member: '梁楷', store: 'softF', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-06-06', paid: 3600, periods: 3, orders: 1 },
+  { id: 'T106', member: '郑晨', store: 'softF', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-05-15', paid: 2480, periods: 4, orders: 1 },
+  { id: 'T107', member: '吴桐', store: 'huaqiao', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-06-07', paid: 2580, periods: 4, orders: 1 },
+  { id: 'T108', member: '叶琳', store: 'huaqiao', category: 'privateCourse', product: '1V1私教包月卡', paidAt: '2026-06-09', paid: 2600, periods: 1, orders: 1 },
+  { id: 'T109', member: '韩越', store: 'huaqiao', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-04-18', paid: 6800, periods: 3, orders: 1 },
+  { id: 'T110', member: '罗旭', store: 'jiageng', category: 'timeCard', product: '自助训练双月卡', paidAt: '2026-06-10', paid: 1880, periods: 2, orders: 1 },
+  { id: 'T111', member: '曾敏', store: 'jiageng', category: 'privateCourse', product: '1V2私教包月卡', paidAt: '2026-06-13', paid: 2980, periods: 1, orders: 1 },
+  { id: 'T112', member: '赵一鸣', store: 'jiageng', category: 'goods', product: '蛋白粉套装', paidAt: '2026-06-15', paid: 780, periods: 1, orders: 1 },
+  { id: 'T113', member: '林舒', store: 'lvcuo', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-06-03', paid: 2780, periods: 4, orders: 1 },
+  { id: 'T114', member: '马骁', store: 'lvcuo', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-05-12', paid: 5600, periods: 3, orders: 1 },
+  { id: 'T115', member: '陈若', store: 'lvcuo', category: 'goods', product: '健身礼包', paidAt: '2026-06-18', paid: 680, periods: 1, orders: 1 },
+  { id: 'T116', member: '方知远', store: 'dihao', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-06-05', paid: 2980, periods: 4, orders: 1 },
+  { id: 'T117', member: '钱语', store: 'dihao', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-06-08', paid: 7200, periods: 3, orders: 1 },
+  { id: 'T118', member: '唐森', store: 'dihao', category: 'timeCard', product: '自助训练双月卡', paidAt: '2026-05-28', paid: 1080, periods: 2, orders: 1 },
+  { id: 'T119', member: '姚可', store: 'sibei', category: 'timeCard', product: '自助训练双月卡', paidAt: '2026-06-11', paid: 1880, periods: 2, orders: 1 },
+  { id: 'T120', member: '顾铭', store: 'sibei', category: 'privateCourse', product: '1V3私教包月卡', paidAt: '2026-06-12', paid: 3200, periods: 1, orders: 1 },
+  { id: 'T121', member: '沈沐', store: 'sibei', category: 'goods', product: '营养补给套装', paidAt: '2026-06-20', paid: 980, periods: 1, orders: 1 },
+  { id: 'T122', member: '蒋乐', store: 'xianglu', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-06-02', paid: 2680, periods: 4, orders: 1 },
+  { id: 'T123', member: '宋婷', store: 'xianglu', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-05-22', paid: 4200, periods: 3, orders: 1 },
+  { id: 'T124', member: '范泽', store: 'xianglu', category: 'goods', product: '筋膜放松套装', paidAt: '2026-06-17', paid: 780, periods: 1, orders: 1 },
+  { id: 'T125', member: '邱宁', store: 'wanda', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-06-06', paid: 2880, periods: 4, orders: 1 },
+  { id: 'T126', member: '孟琪', store: 'wanda', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-06-14', paid: 5400, periods: 3, orders: 1 },
+  { id: 'T127', member: '邵岩', store: 'wanda', category: 'timeCard', product: '自助训练双月卡', paidAt: '2026-04-09', paid: 1680, periods: 2, orders: 1 },
+  { id: 'T128', member: '何雨', store: 'softB', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-02-16', paid: 6400, periods: 3, orders: 1 },
+  { id: 'T129', member: '江莱', store: 'softF', category: 'goods', product: '运动装备套装', paidAt: '2026-06-22', paid: 1280, periods: 1, orders: 1 },
+  { id: 'T130', member: '董青', store: 'jiageng', category: 'timeCard', product: '自助训练半月卡', paidAt: '2026-06-24', paid: 980, periods: 1, orders: 1 },
+  { id: 'T001', member: '王小明', store: 'softB', category: 'timeCard', product: '自助训练月卡', paidAt: '2026-06-03', paid: 699, periods: 1, orders: 1 },
+  { id: 'T002', member: '林可', store: 'softB', category: 'timeCard', product: '自助训练半月卡', paidAt: '2026-06-25', paid: 300, periods: 1, orders: 1 },
+  { id: 'T003', member: '陈安', store: 'softF', category: 'timeCard', product: '自助训练双月卡', paidAt: '2026-05-18', paid: 1188, periods: 2, orders: 1 },
+  { id: 'T004', member: '周宁', store: 'huaqiao', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-01-08', paid: 2399, periods: 4, orders: 1 },
+  { id: 'T005', member: 'Mia', store: 'jiageng', category: 'privateCourse', product: '3节私教包', paidAt: '2026-06-12', paid: 1299, periods: 1, orders: 1 },
+  { id: 'T006', member: '许哲', store: 'lvcuo', category: 'privateCourse', product: '私教包季卡', paidAt: '2026-04-20', paid: 899, periods: 3, orders: 1 },
+  { id: 'T007', member: '何嘉', store: 'dihao', category: 'timeCard', product: '自助训练学期卡', paidAt: '2026-06-02', paid: 2599, periods: 4, orders: 1 },
+  { id: 'T008', member: '赵悦', store: 'sibei', category: 'privateCourse', product: '私教单次卡', paidAt: '2026-06-08', paid: 1680, periods: 1, orders: 1 },
+  { id: 'T009', member: '孙朗', store: 'xianglu', category: 'goods', product: '健身礼包', paidAt: '2026-06-10', paid: 399, periods: 1, orders: 1 },
+  { id: 'T010', member: '刘欣', store: 'wanda', category: 'goods', product: '营养补给套装', paidAt: '2026-06-16', paid: 599, periods: 1, orders: 1 },
+  { id: 'T011', member: '陆遥', store: 'softF', category: 'timeCard', product: '自助训练半月卡', paidAt: '2026-06-06', paid: 899, periods: 1, orders: 1 },
+  { id: 'T012', member: '陈森', store: 'huaqiao', category: 'privateCourse', product: '1V1私教包月卡', paidAt: '2026-06-19', paid: 1999, periods: 1, orders: 1 },
+  { id: 'T013', member: '李想', store: 'lvcuo', category: 'goods', product: '蛋白粉套装', paidAt: '2026-06-21', paid: 699, periods: 1, orders: 1 },
+];
+
+const recognitionCategoryMeta = {
+  timeCard: { name: '次卡/时间卡销售', icon: CreditCard },
+  privateCourse: { name: '私教课程销售', icon: TicketCheck },
+  goods: { name: '商品销售', icon: ShoppingBag },
+} satisfies Record<RecognitionCardSale['category'], { name: string; icon: typeof CreditCard }>;
+
+const recognitionCategoryRevenueTitle = {
+  timeCard: '次卡/时间卡本月确认收入',
+  privateCourse: '私教课程本月确认收入',
+  goods: '商品销售本月确认收入',
+} satisfies Record<RecognitionCardSale['category'], string>;
+
+const defaultRecognitionMonth = '2026-06';
+
+const recognitionMonthOptions = [
+  { id: '2026-04', name: '2026年4月' },
+  { id: '2026-05', name: '2026年5月' },
+  { id: '2026-06', name: '2026年6月' },
+  { id: '2026-07', name: '2026年7月' },
+  { id: '2026-08', name: '2026年8月' },
 ];
 
 function App() {
+  const [dashboard, setDashboard] = useState<DashboardType>('venue');
   const [period, setPeriod] = useState<Period>('today');
   const [store, setStore] = useState<StoreId>('all');
   const [tab, setTab] = useState<Tab>('project');
+  const [selectedProject, setSelectedProject] = useState<Project>('passCard');
 
   const filteredOrders = useMemo(() => {
     const bucket = period === 'custom' ? ['today', 'week'] : [period];
-    return orders.filter((order) => bucket.includes(order.dateBucket) && (store === 'all' || order.store === store));
-  }, [period, store]);
+    return orders.filter((order) => {
+      const inScope = dashboard === 'venue' || (order.project !== 'venue' && order.project !== 'storedCard');
+      return inScope && bucket.includes(order.dateBucket) && (store === 'all' || order.store === store);
+    });
+  }, [dashboard, period, store]);
 
   const totals = useMemo(() => summarize(filteredOrders), [filteredOrders]);
-  const projectRows = useMemo(() => groupBy(filteredOrders, 'project'), [filteredOrders]);
+  const projectRows = useMemo(() => orderProjectRows(groupBy(filteredOrders, 'project')), [filteredOrders]);
   const sourceRows = useMemo(() => groupBy(filteredOrders, 'source'), [filteredOrders]);
   const paymentRows = useMemo(() => groupBy(filteredOrders, 'payment'), [filteredOrders]);
   const storeRows = useMemo(() => groupBy(filteredOrders, 'store'), [filteredOrders]);
   const activePeriod = periods.find((item) => item.id === period)!;
+  const miniProgramRevenue = useMemo(() => summarize(filteredOrders.filter((order) => order.source === 'miniProgram')).actualRevenue, [filteredOrders]);
+  const cashierRevenue = useMemo(() => summarize(filteredOrders.filter((order) => order.source === 'cashier')).actualRevenue, [filteredOrders]);
 
   return (
-    <div className="min-h-screen bg-[#f3f6f4] text-slate-950">
+    <div className="min-h-screen bg-[#f5f7fb] text-slate-800">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-200 bg-white lg:block">
         <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-950 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-600 text-white">
             <Building2 size={21} />
           </div>
           <div>
@@ -149,14 +293,19 @@ function App() {
         </div>
         <nav className="px-3 py-4">
           {[
-            ['营收看板', BarChart3],
-            ['订单管理', ReceiptText],
-            ['会员与卡项', Wallet],
-            ['商品库存', Package],
-          ].map(([label, Icon], index) => (
-            <button key={label as string} className={cn('mb-1 flex h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-bold', index === 0 ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-100')}>
-              <Icon size={18} />
-              {label as string}
+            { id: 'venue', label: '营收看板', icon: BarChart3 },
+            { id: 'recognition', label: '健身行业确认收入看板', icon: ReceiptText },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setDashboard(item.id as DashboardType);
+                setSelectedProject('passCard');
+              }}
+              className={cn('mb-1 flex h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-bold', dashboard === item.id ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'text-slate-600 hover:bg-slate-100')}
+            >
+              <item.icon size={18} />
+              {item.label}
             </button>
           ))}
         </nav>
@@ -170,7 +319,7 @@ function App() {
                 <Store size={14} />
                 管理后台 / 营收分析
               </div>
-              <h1 className="mt-1 text-xl font-black text-slate-950">收入分析看板</h1>
+              <h1 className="mt-1 text-xl font-black text-slate-800">{dashboard === 'venue' ? '收入分析看板' : '健身行业确认收入看板'}</h1>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <IconAction label="刷新">
@@ -184,18 +333,13 @@ function App() {
         </header>
 
         <section className="px-4 py-4 lg:px-6">
+          {dashboard === 'recognition' ? (
+            <RecognitionIncomeDashboard store={store} onStoreChange={setStore} />
+          ) : (
+            <>
           <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-4">
             <Segmented value={period} onChange={setPeriod} />
             <SelectBox icon={Building2} value={store} onChange={(value) => setStore(value as StoreId)} options={stores} />
-            <button className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700">
-              <Filter size={16} />
-              更多筛选
-              <ChevronDown size={15} />
-            </button>
-            <div className="ml-auto flex h-10 min-w-64 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-500">
-              <Search size={16} />
-              搜索订单号、门店、项目
-            </div>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -205,54 +349,490 @@ function App() {
             </div>
           </div>
 
-          <section className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-            <MetricCard title="实际营收" value={money(totals.actualRevenue)} helper="真实新增收入" accent="bg-slate-950 text-white" large />
-            <MetricCard title="总销售额" value={money(totals.sales)} helper="含储值卡销售与余额消费" />
-            <MetricCard title="储值卡支付" value={money(totals.storedBalance)} helper="余额消耗，不重复计入营收" />
-            <MetricCard title="应收金额" value={money(totals.receivable)} helper="支付前应收" />
-            <MetricCard title="优惠金额" value={money(totals.discount)} helper="不拆优惠类型" />
-            <MetricCard title="订单数" value={`${totals.orders}`} helper={`客单价 ${money(totals.orders ? totals.sales / totals.orders : 0)}`} />
+          <section className={cn('mt-4 grid gap-2.5', dashboard === 'fitness' ? 'md:grid-cols-2 xl:grid-cols-5' : 'xl:grid-cols-[1.4fr_1fr]')}>
+            {dashboard === 'fitness' ? (
+              <>
+                <MetricCard title="实际营收总额" value={money(totals.actualRevenue)} helper="全部渠道实际营收" />
+                <MetricCard title="小程序营收" value={money(miniProgramRevenue)} helper="小程序实际营收" />
+                <MetricCard title="收银台营收" value={money(cashierRevenue)} helper="收银台实际营收" />
+                <MetricCard title="美团核销" value={money(totals.meituan)} helper="第三方团购核销" />
+                <MetricCard title="抖音核销" value={money(totals.douyin)} helper="第三方团购核销" />
+              </>
+            ) : (
+              <>
+                <RevenueTotalCard total={totals.actualRevenue} miniProgramRevenue={miniProgramRevenue} cashierRevenue={cashierRevenue} meituanRevenue={totals.meituan} douyinRevenue={totals.douyin} />
+                <SalesBreakdownCards sales={totals.sales} storedBalance={totals.storedBalance} actualRevenue={totals.actualRevenue} />
+              </>
+            )}
           </section>
 
-          <section className="mt-4 grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-            <Panel title="营收趋势" icon={LineChart} action="按日展示">
-              <TrendChart />
-            </Panel>
-            <Panel title="关键口径" icon={ReceiptText} action="原型说明">
-              <div className="space-y-3 text-sm">
-                <Definition label="储值卡充值营收" value={`${money(totals.storedCardRevenue)}，按实收金额计算，不按面值。`} />
-                <Definition label="美团核销实付" value={`${money(totals.meituan)}，计入实际营收，标注第三方团购。`} />
-                <Definition label="抖音核销实付" value={`${money(totals.douyin)}，计入实际营收，标注第三方团购。`} />
-                <Definition label="商品销售" value="包含已配置商品销售，也包含未建商品的直接收款。" />
-              </div>
+          <section className="mt-4">
+            <Panel title="项目统计" icon={BarChart3} subtitle="按实际营收统计">
+              <ProjectSummary rows={projectRows} orders={filteredOrders} selectedProject={selectedProject} onSelectProject={setSelectedProject} dashboard={dashboard} />
             </Panel>
           </section>
 
-          <section className="mt-4 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-            <Panel title="销售项目结构" icon={BarChart3}>
-              <BarList rows={projectRows.map((row) => ({ name: projectMeta[row.key as Project].short, value: row.total.actualRevenue, color: projectMeta[row.key as Project].color }))} total={totals.actualRevenue} />
-            </Panel>
+          <section className="mt-4">
             <Panel title="多维明细" icon={ArrowDownToLine}>
-              <div className="mb-3 flex flex-wrap gap-2">
-                {[
-                  { id: 'project', name: '销售项目' },
-                  { id: 'source', name: '购买来源' },
-                  { id: 'payment', name: '付款方式' },
-                  { id: 'store', name: '门店对比' },
-                ].map((item) => (
-                  <button key={item.id} onClick={() => setTab(item.id as Tab)} className={cn('h-9 rounded-md px-3 text-sm font-bold', tab === item.id ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600')}>
-                    {item.name}
-                  </button>
-                ))}
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'project', name: '销售项目' },
+                    { id: 'source', name: '购买来源' },
+                    { id: 'payment', name: '付款方式' },
+                    { id: 'store', name: '门店对比' },
+                  ].map((item) => (
+                    <button key={item.id} onClick={() => setTab(item.id as Tab)} className={cn('h-9 rounded-md px-3 text-sm font-bold', tab === item.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600')}>
+                      {item.name}
+                    </button>
+                  ))}
+                </div>
+                <button className="flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600">
+                  <Download size={15} />
+                  导出
+                </button>
               </div>
-              {tab === 'project' && <DataTable rows={projectRows} type="project" total={totals.actualRevenue} />}
-              {tab === 'source' && <DataTable rows={sourceRows} type="source" total={totals.actualRevenue} />}
-              {tab === 'payment' && <DataTable rows={paymentRows} type="payment" total={totals.actualRevenue} />}
-              {tab === 'store' && <DataTable rows={storeRows} type="store" total={totals.actualRevenue} />}
+              {tab === 'project' && <DataTable rows={projectRows} type="project" total={totals.actualRevenue} dashboard={dashboard} />}
+              {tab === 'source' && <DataTable rows={sourceRows} type="source" total={totals.actualRevenue} dashboard={dashboard} />}
+              {tab === 'payment' && <DataTable rows={paymentRows} type="payment" total={totals.actualRevenue} dashboard={dashboard} />}
+              {tab === 'store' && <DataTable rows={storeRows} type="store" total={totals.actualRevenue} dashboard={dashboard} />}
             </Panel>
           </section>
+
+          <section className="mt-4">
+            <div className="rounded-lg border border-slate-100 bg-white px-3.5 py-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="mr-2 flex items-center gap-2 text-sm font-black text-slate-800">
+                  <ReceiptText size={16} />
+                  统计口径说明
+                </div>
+                <Definition label="储值卡充值营收" value={`${money(totals.storedCardRevenue)}，按实收金额`} />
+                <Definition label="美团核销实付" value={`${money(totals.meituan)}，第三方团购`} />
+                <Definition label="抖音核销实付" value={`${money(totals.douyin)}，第三方团购`} />
+                <Definition label="商品销售" value="含直接收款" />
+              </div>
+            </div>
+          </section>
+            </>
+          )}
         </section>
       </main>
+    </div>
+  );
+}
+
+function RecognitionIncomeDashboard({ store, onStoreChange }: { store: StoreId; onStoreChange: (store: StoreId) => void }) {
+  const [selectedCategory, setSelectedCategory] = useState<RecognitionCardSale['category']>('timeCard');
+  const [detailTab, setDetailTab] = useState<'recognized' | 'pending'>('recognized');
+  const [recognitionMonth, setRecognitionMonth] = useState(defaultRecognitionMonth);
+  const cards = useMemo(() => recognitionCardSales.filter((item) => store === 'all' || item.store === store), [store]);
+  const activeCards = useMemo(() => cards.filter((item) => getRecognitionPeriodIndex(item, recognitionMonth) !== null), [cards, recognitionMonth]);
+  const pendingDetailCards = useMemo(() => cards.filter((item) => item.category !== 'goods' && getPendingRecognitionAmount(item, recognitionMonth) > 0), [cards, recognitionMonth]);
+  const metrics = useMemo(() => recognitionMetrics(cards, recognitionMonth), [cards, recognitionMonth]);
+  const currentSalesRecognized = metrics.currentSalesRecognized;
+  const historySalesRecognized = metrics.historySalesRecognized;
+  const currentRecognized = metrics.currentRecognized;
+  const monthlyPending = metrics.monthlyPending;
+  const historyPending = metrics.historyPending;
+  const monthlySalesTotal = metrics.monthlySalesTotal;
+  const pendingBalance = metrics.pending;
+  const categoryRows = useMemo(() => groupRecognitionByCategory(activeCards, cards, recognitionMonth), [activeCards, cards, recognitionMonth]);
+  const productRows = useMemo(() => groupRecognitionByProduct(activeCards, cards, selectedCategory, recognitionMonth), [activeCards, cards, selectedCategory, recognitionMonth]);
+  const storeRows = useMemo(() => groupRecognitionByStore(cards, store, recognitionMonth), [cards, store, recognitionMonth]);
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-4">
+        <SelectBox icon={CalendarDays} value={recognitionMonth} onChange={setRecognitionMonth} options={recognitionMonthOptions} />
+        <SelectBox icon={Building2} value={store} onChange={(value) => onStoreChange(value as StoreId)} options={fitnessStores} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+        <div className="font-semibold text-slate-500">统计月份：{recognitionMonth}，确认收入按自然月归属，以支付购买时间为确认起点。</div>
+        <div className="rounded-md bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+          单期确认金额 = 实收金额 ÷ 确认期数；最后一期倒挤平账。
+        </div>
+      </div>
+
+      <section className="mt-4 grid gap-2.5 lg:grid-cols-3">
+        <MetricCard
+          title="本月确认收入"
+          value={money(currentRecognized)}
+          accent="bg-blue-600 text-white ring-1 ring-blue-500"
+          large
+          details={[
+            { label: '本月新售确认', value: money(currentSalesRecognized) },
+            { label: '往期销售确认', value: money(historySalesRecognized) },
+          ]}
+        />
+        <MetricCard
+          title="本月销售金额"
+          value={money(monthlySalesTotal)}
+          details={[
+            { label: '当月确认收入', value: money(currentSalesRecognized) },
+            { label: '后续待确认', value: money(monthlyPending) },
+          ]}
+        />
+        <MetricCard
+          title="待确认收入余额"
+          value={money(pendingBalance)}
+          details={[
+            { label: '本月新增待确认', value: money(monthlyPending) },
+            { label: '往期剩余待确认', value: money(historyPending) },
+          ]}
+        />
+      </section>
+
+      <section className="mt-4">
+        <Panel title="项目统计" icon={CreditCard} subtitle="按销售分类统计">
+          <RecognitionCategorySummary rows={categoryRows} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
+          <div className="mt-4">
+            <RecognitionProductTable rows={productRows} category={selectedCategory} />
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-4">
+        <Panel title="门店确认收入统计" icon={Building2}>
+          <RecognitionStoreTable rows={storeRows} />
+        </Panel>
+      </section>
+
+      <section className="mt-4">
+        <Panel
+          title="收入明细"
+          icon={ReceiptText}
+          action={
+            <button className="inline-flex h-8 items-center gap-1 rounded-md border border-slate-200 px-2.5 text-xs font-bold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+              <Download size={14} />
+              导出
+            </button>
+          }
+        >
+          <div className="mb-3 flex rounded-md bg-slate-50 p-1 text-sm font-bold">
+            {[
+              { id: 'recognized', label: '本月确认收入明细' },
+              { id: 'pending', label: '待确认收入明细' },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setDetailTab(item.id as 'recognized' | 'pending')}
+                className={cn('h-9 flex-1 rounded px-3 transition', detailTab === item.id ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <RecognitionDetailTable rows={detailTab === 'recognized' ? activeCards : pendingDetailCards} month={recognitionMonth} />
+        </Panel>
+      </section>
+    </>
+  );
+}
+
+function getMonthNumber(month: string) {
+  const [year, monthValue] = month.split('-').map(Number);
+  return year * 12 + monthValue;
+}
+
+function getRecognitionPeriodIndex(item: RecognitionCardSale, month: string) {
+  const diff = getMonthNumber(month) - getMonthNumber(item.paidAt.slice(0, 7));
+  if (diff < 0 || diff >= item.periods) return null;
+  return diff;
+}
+
+function getPeriodAmount(item: RecognitionCardSale, index: number) {
+  const totalCents = Math.round(item.paid * 100);
+  const baseCents = Math.floor(totalCents / item.periods);
+  const amountCents = index === item.periods - 1 ? totalCents - baseCents * (item.periods - 1) : baseCents;
+  return amountCents / 100;
+}
+
+function getCurrentRecognizedAmount(item: RecognitionCardSale, month: string) {
+  const index = getRecognitionPeriodIndex(item, month);
+  return index === null ? 0 : getPeriodAmount(item, index);
+}
+
+function getRecognizedToMonth(item: RecognitionCardSale, month: string) {
+  const currentIndex = getRecognitionPeriodIndex(item, month);
+  const latestIndex = currentIndex === null ? Math.min(Math.max(getMonthNumber(month) - getMonthNumber(item.paidAt.slice(0, 7)), -1), item.periods - 1) : currentIndex;
+  if (latestIndex < 0) return 0;
+  return Array.from({ length: latestIndex + 1 }).reduce((sum, _, index) => sum + getPeriodAmount(item, index), 0);
+}
+
+function getPendingRecognitionAmount(item: RecognitionCardSale, month: string) {
+  return Math.max(item.paid - getRecognizedToMonth(item, month), 0);
+}
+
+function getCurrentMonthPendingAmount(item: RecognitionCardSale, month: string) {
+  if (!item.paidAt.startsWith(month)) return 0;
+  return Math.max(item.paid - getCurrentRecognizedAmount(item, month), 0);
+}
+
+function recognitionMetrics(items: RecognitionCardSale[], month: string) {
+  const currentMonthItems = items.filter((item) => item.paidAt.startsWith(month));
+  const activeItems = items.filter((item) => getRecognitionPeriodIndex(item, month) !== null);
+  const currentSalesRecognized = currentMonthItems.reduce((sum, item) => sum + (item.category === 'goods' ? item.paid : getCurrentRecognizedAmount(item, month)), 0);
+  const historySalesRecognized = activeItems.filter((item) => item.category !== 'goods' && !item.paidAt.startsWith(month)).reduce((sum, item) => sum + getCurrentRecognizedAmount(item, month), 0);
+  const monthlyPending = items.filter((item) => item.category !== 'goods').reduce((sum, item) => sum + getCurrentMonthPendingAmount(item, month), 0);
+  const historyPending = items.filter((item) => item.category !== 'goods' && !item.paidAt.startsWith(month)).reduce((sum, item) => sum + getPendingRecognitionAmount(item, month), 0);
+
+  return {
+    currentSalesRecognized,
+    historySalesRecognized,
+    currentRecognized: currentSalesRecognized + historySalesRecognized,
+    monthlyPending,
+    historyPending,
+    pending: monthlyPending + historyPending,
+    monthlySalesTotal: currentSalesRecognized + monthlyPending,
+    orders: currentMonthItems.reduce((sum, item) => sum + item.orders, 0),
+  };
+}
+
+function groupRecognitionByCategory(activeCards: RecognitionCardSale[], allCards: RecognitionCardSale[], month: string) {
+  return (Object.keys(recognitionCategoryMeta) as RecognitionCardSale['category'][]).map((category) => {
+    const allByCategory = allCards.filter((item) => item.category === category);
+    const metrics = recognitionMetrics(allByCategory, month);
+    return {
+      key: category,
+      ...metrics,
+      periods: Math.max(...allByCategory.map((item) => item.periods)),
+    };
+  });
+}
+
+function groupRecognitionByProduct(activeCards: RecognitionCardSale[], allCards: RecognitionCardSale[], category: RecognitionCardSale['category'], month: string) {
+  const scopedAllCards = allCards.filter((item) => item.category === category);
+  const productNames = Array.from(new Set(scopedAllCards.map((item) => item.product)));
+  return productNames.map((product) => {
+    const allByProduct = scopedAllCards.filter((item) => item.product === product);
+    const metrics = recognitionMetrics(allByProduct, month);
+    return {
+      key: product,
+      ...metrics,
+      periods: Math.max(...allByProduct.map((item) => item.periods)),
+    };
+  });
+}
+
+function groupRecognitionByStore(cards: RecognitionCardSale[], selectedStore: StoreId, month: string) {
+  return fitnessStores
+    .filter((item) => item.id !== 'all' && (selectedStore === 'all' || item.id === selectedStore))
+    .map((storeItem) => {
+      const scopedCards = cards.filter((item) => item.store === storeItem.id);
+      const metrics = recognitionMetrics(scopedCards, month);
+      return {
+        storeName: storeItem.name,
+        ...metrics,
+      };
+    });
+}
+
+function RecognitionCategorySummary({
+  rows,
+  selectedCategory,
+  onSelectCategory,
+}: {
+  rows: ReturnType<typeof groupRecognitionByCategory>;
+  selectedCategory: RecognitionCardSale['category'];
+  onSelectCategory: (category: RecognitionCardSale['category']) => void;
+}) {
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      {rows.map((row) => {
+        const meta = recognitionCategoryMeta[row.key];
+        const Icon = meta.icon;
+        const active = selectedCategory === row.key;
+        return (
+          <button
+            key={row.key}
+            onClick={() => onSelectCategory(row.key)}
+            className={cn('rounded-lg border bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/30', active ? 'border-blue-200 bg-blue-50/60 ring-1 ring-blue-100' : 'border-slate-100')}
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                <Icon size={16} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-black text-slate-800">{recognitionCategoryRevenueTitle[row.key]}</div>
+                <div className="mt-1 truncate text-2xl font-black tracking-normal text-blue-700">{money(row.currentRecognized)}</div>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-bold">
+              <div className="min-w-0 rounded bg-slate-50 px-2 py-2">
+                <div className="truncate text-slate-400">本月新售确认</div>
+                <div className="mt-1 truncate text-sm font-black text-slate-700">{money(row.currentSalesRecognized)}</div>
+              </div>
+              <div className="min-w-0 rounded bg-slate-50 px-2 py-2">
+                <div className="truncate text-slate-400">往期销售确认</div>
+                <div className="mt-1 truncate text-sm font-black text-slate-700">{money(row.historySalesRecognized)}</div>
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function RecognitionProductTable({ rows, category }: { rows: ReturnType<typeof groupRecognitionByProduct>; category: RecognitionCardSale['category'] }) {
+  const meta = recognitionCategoryMeta[category];
+  const total = rows.reduce(
+    (sum, row) => ({
+      currentRecognized: sum.currentRecognized + row.currentRecognized,
+      monthlySalesTotal: sum.monthlySalesTotal + row.monthlySalesTotal,
+      pending: sum.pending + row.pending,
+      currentSalesRecognized: sum.currentSalesRecognized + row.currentSalesRecognized,
+      monthlyPending: sum.monthlyPending + row.monthlyPending,
+      historySalesRecognized: sum.historySalesRecognized + row.historySalesRecognized,
+      historyPending: sum.historyPending + row.historyPending,
+    }),
+    { currentRecognized: 0, monthlySalesTotal: 0, pending: 0, currentSalesRecognized: 0, monthlyPending: 0, historySalesRecognized: 0, historyPending: 0 },
+  );
+
+  return (
+    <div>
+      <div className="mb-3 text-sm font-black text-slate-800">销售明细</div>
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[980px] border-separate border-spacing-0 text-sm">
+        <thead>
+          <tr className="text-xs font-black text-slate-500">
+            <th className="border-b border-slate-100 px-3 py-3 text-left">统计项目</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right text-blue-700">本月确认收入</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">本月销售金额</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">本月新售确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">本月新售待确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">往期销售确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">往期销售待确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">确认期数</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key} className="font-bold text-slate-800">
+              <td className="border-b border-slate-100 px-3 py-3">{row.key}</td>
+              <td className="border-b border-slate-100 bg-blue-50/40 px-3 py-3 text-right tabular-nums text-blue-700">{money(row.currentRecognized)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.monthlySalesTotal)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.currentSalesRecognized)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.monthlyPending)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.historySalesRecognized)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.historyPending)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{row.periods}</td>
+            </tr>
+          ))}
+          <tr className="font-black text-slate-900">
+            <td className="border-b border-slate-100 bg-slate-50 px-3 py-3">合计</td>
+            <td className="border-b border-slate-100 bg-blue-50 px-3 py-3 text-right tabular-nums text-blue-700">{money(total.currentRecognized)}</td>
+            <td className="border-b border-slate-100 bg-slate-50 px-3 py-3 text-right tabular-nums">{money(total.monthlySalesTotal)}</td>
+            <td className="border-b border-slate-100 bg-slate-50 px-3 py-3 text-right tabular-nums">{money(total.currentSalesRecognized)}</td>
+            <td className="border-b border-slate-100 bg-slate-50 px-3 py-3 text-right tabular-nums">{money(total.monthlyPending)}</td>
+            <td className="border-b border-slate-100 bg-slate-50 px-3 py-3 text-right tabular-nums">{money(total.historySalesRecognized)}</td>
+            <td className="border-b border-slate-100 bg-slate-50 px-3 py-3 text-right tabular-nums">{money(total.historyPending)}</td>
+            <td className="border-b border-slate-100 bg-slate-50 px-3 py-3 text-right tabular-nums">-</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  );
+}
+
+function RecognitionStoreTable({ rows }: { rows: ReturnType<typeof groupRecognitionByStore> }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleRows = expanded ? rows : rows.slice(0, 6);
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[980px] border-separate border-spacing-0 text-sm">
+        <thead>
+          <tr className="text-xs font-black text-slate-500">
+            <th className="border-b border-slate-100 px-3 py-3 text-left">门店</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right text-blue-700">本月确认收入</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">本月销售金额</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">本月新售确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">本月新售待确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">往期销售确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">往期销售待确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">确认期数</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visibleRows.map((row) => (
+            <tr key={row.storeName} className="font-bold text-slate-800">
+              <td className="border-b border-slate-100 px-3 py-3">{row.storeName}</td>
+              <td className="border-b border-slate-100 bg-blue-50/40 px-3 py-3 text-right tabular-nums text-blue-700">{money(row.currentRecognized)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.monthlySalesTotal)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.currentSalesRecognized)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.monthlyPending)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.historySalesRecognized)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.historyPending)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">-</td>
+            </tr>
+          ))}
+          {rows.length > 6 && (
+            <tr>
+              <td colSpan={7} className="px-3 py-3 text-center">
+                <button onClick={() => setExpanded((value) => !value)} className="inline-flex h-9 items-center gap-1 rounded-md px-3 text-sm font-bold text-blue-700 hover:bg-blue-50">
+                  {expanded ? '收起' : '查看更多'}
+                  <ChevronDown size={15} className={cn('transition', expanded && 'rotate-180')} />
+                </button>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RecognitionDetailTable({ rows, month }: { rows: RecognitionCardSale[]; month: string }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[1080px] border-separate border-spacing-0 text-sm">
+        <thead>
+          <tr className="text-xs font-black text-slate-500">
+            <th className="border-b border-slate-100 px-3 py-3 text-left">会员</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-left">门店</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-left">销售分类</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-left">卡项</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-left">支付时间</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">实收金额</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">确认期数</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right text-blue-700">本月确认收入</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">本月销售金额</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">待确认收入余额</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">新售确认</th>
+            <th className="border-b border-slate-100 px-3 py-3 text-right">往期确认</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const isCurrentMonthSale = row.paidAt.startsWith(month);
+            const currentAmount = row.category === 'goods' ? row.paid : getCurrentRecognizedAmount(row, month);
+            const newSaleRecognized = isCurrentMonthSale ? currentAmount : 0;
+            const historyRecognized = !isCurrentMonthSale && row.category !== 'goods' ? currentAmount : 0;
+            const currentMonthPending = getCurrentMonthPendingAmount(row, month);
+            const monthlySales = newSaleRecognized + currentMonthPending;
+            const pending = row.category === 'goods' ? 0 : getPendingRecognitionAmount(row, month);
+            return (
+              <tr key={row.id} className="font-bold text-slate-800">
+                <td className="border-b border-slate-100 px-3 py-3">{row.member}</td>
+                <td className="border-b border-slate-100 px-3 py-3">{fitnessStores.find((item) => item.id === row.store)?.name}</td>
+                <td className="border-b border-slate-100 px-3 py-3">{recognitionCategoryMeta[row.category].name}</td>
+                <td className="border-b border-slate-100 px-3 py-3">{row.product}</td>
+                <td className="border-b border-slate-100 px-3 py-3">{row.paidAt}</td>
+                <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(row.paid)}</td>
+                <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{row.periods}</td>
+                <td className="border-b border-slate-100 bg-blue-50/40 px-3 py-3 text-right tabular-nums text-blue-700">{money(newSaleRecognized + historyRecognized)}</td>
+                <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(monthlySales)}</td>
+                <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(pending)}</td>
+                <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(newSaleRecognized)}</td>
+                <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(historyRecognized)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -288,11 +868,19 @@ function groupBy<T extends keyof RevenueOrder>(rows: RevenueOrder[], key: T) {
     .sort((a, b) => b.total.actualRevenue - a.total.actualRevenue);
 }
 
+function orderProjectRows(rows: { key: string; total: ReturnType<typeof summarize> }[]) {
+  return [...rows].sort((a, b) => {
+    if (a.key === 'passCard') return -1;
+    if (b.key === 'passCard') return 1;
+    return b.total.actualRevenue - a.total.actualRevenue;
+  });
+}
+
 function Segmented({ value, onChange }: { value: Period; onChange: (value: Period) => void }) {
   return (
     <div className="flex h-10 rounded-md bg-white p-1 ring-1 ring-slate-200">
       {periods.map((item) => (
-        <button key={item.id} onClick={() => onChange(item.id)} className={cn('min-w-16 rounded px-3 text-sm font-bold', value === item.id ? 'bg-slate-950 text-white' : 'text-slate-600')}>
+        <button key={item.id} onClick={() => onChange(item.id)} className={cn('min-w-16 rounded px-3 text-sm font-bold', value === item.id ? 'bg-blue-600 text-white' : 'text-slate-600')}>
           {item.name}
         </button>
       ))}
@@ -323,124 +911,313 @@ function IconAction({ label, children }: { label: string; children: ReactNode })
   );
 }
 
-function MetricCard({ title, value, helper, accent, large }: { title: string; value: string; helper: string; accent?: string; large?: boolean }) {
+function MetricCard({
+  title,
+  value,
+  helper,
+  accent,
+  large,
+  details,
+}: {
+  title: string;
+  value: string;
+  helper?: string;
+  accent?: string;
+  large?: boolean;
+  details?: { label: string; value: string }[];
+}) {
   return (
-    <div className={cn('rounded-lg border border-slate-200 bg-white p-4', accent)}>
-      <div className={cn('text-sm font-bold', accent ? 'text-white/70' : 'text-slate-500')}>{title}</div>
-      <div className={cn('mt-2 font-black tracking-normal', large ? 'text-3xl' : 'text-2xl')}>{value}</div>
-      <div className={cn('mt-2 text-xs font-semibold leading-5', accent ? 'text-white/65' : 'text-slate-500')}>{helper}</div>
+    <div className={cn('flex min-h-36 flex-col rounded-lg border border-slate-100 bg-white p-3.5 shadow-sm shadow-slate-200/40', accent)}>
+      <div className={cn('text-xs font-bold', accent ? 'text-white/70' : 'text-slate-500')}>{title}</div>
+      <div className={cn('mt-1.5 font-black tracking-normal', large ? 'text-2xl' : 'text-xl')}>{value}</div>
+      {helper && <div className={cn('mt-1.5 text-[11px] font-semibold leading-5', accent ? 'text-white/65' : 'text-slate-500')}>{helper}</div>}
+      {details && (
+        <div className="mt-auto grid grid-cols-2 gap-1.5 pt-3">
+          {details.map((item) => (
+            <div key={item.label} className={cn('min-w-0 rounded px-2 py-1.5 text-[11px] font-bold', accent ? 'bg-white/10' : 'bg-slate-50')}>
+              <div className={cn('truncate', accent ? 'text-white/65' : 'text-slate-500')}>{item.label}</div>
+              <div className={cn('mt-0.5 truncate tabular-nums', accent ? 'text-white' : 'text-slate-800')}>{item.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function Panel({ title, icon: Icon, action, children }: { title: string; icon: typeof Store; action?: string; children: ReactNode }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white">
-      <div className="flex min-h-12 items-center justify-between border-b border-slate-100 px-4">
-        <div className="flex items-center gap-2 text-sm font-black">
-          <Icon size={17} />
-          {title}
-        </div>
-        {action && <div className="text-xs font-bold text-slate-400">{action}</div>}
-      </div>
-      <div className="p-4">{children}</div>
-    </section>
-  );
-}
+function RevenueTotalCard({
+  total,
+  miniProgramRevenue,
+  cashierRevenue,
+  meituanRevenue,
+  douyinRevenue,
+}: {
+  total: number;
+  miniProgramRevenue: number;
+  cashierRevenue: number;
+  meituanRevenue: number;
+  douyinRevenue: number;
+}) {
+  const items = [
+    { label: '小程序营收', value: miniProgramRevenue },
+    { label: '收银台营收', value: cashierRevenue },
+    { label: '美团核销', value: meituanRevenue },
+    { label: '抖音核销', value: douyinRevenue },
+  ];
 
-function TrendChart() {
-  const max = Math.max(...trend.map((item) => item.sales));
   return (
-    <div className="h-72">
-      <div className="flex h-60 items-end gap-3">
-        {trend.map((item) => (
-          <div key={item.label} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-            <div className="flex h-48 w-full items-end justify-center gap-1 rounded-md bg-slate-50 px-2 pb-2">
-              <div className="w-3 rounded-t bg-slate-900" style={{ height: `${(item.revenue / max) * 100}%` }} title={`实际营收 ${money(item.revenue)}`} />
-              <div className="w-3 rounded-t bg-cyan-500" style={{ height: `${(item.sales / max) * 100}%` }} title={`总销售额 ${money(item.sales)}`} />
-              <div className="w-3 rounded-t bg-amber-500" style={{ height: `${(item.stored / max) * 100}%` }} title={`储值卡支付 ${money(item.stored)}`} />
-            </div>
-            <div className="text-xs font-bold text-slate-500">{item.label}</div>
+    <div className="rounded-lg border border-blue-500 bg-blue-600 p-4 text-white shadow-sm shadow-blue-200/60">
+      <div className="text-xs font-bold text-white/70">实际营收总额</div>
+      <div className="mt-1.5 text-4xl font-black tracking-normal">{money(total)}</div>
+      <div className="mt-2 text-[11px] font-semibold text-white/65">小程序 + 收银台 + 美团核销 + 抖音核销</div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {items.map((item) => (
+          <div key={item.label} className="rounded-md bg-white/10 px-2.5 py-2.5">
+            <div className="text-[11px] font-bold text-white/65">{item.label}</div>
+            <div className="mt-1 text-base font-black">{money(item.value)}</div>
           </div>
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-4 text-xs font-bold text-slate-500">
-        <Legend color="bg-slate-900" label="实际营收" />
-        <Legend color="bg-cyan-500" label="总销售额" />
-        <Legend color="bg-amber-500" label="储值卡支付" />
+    </div>
+  );
+}
+
+function SalesBreakdownCards({ sales, storedBalance, actualRevenue }: {
+  sales: number;
+  storedBalance: number;
+  actualRevenue: number;
+}) {
+  return (
+    <div className="flex h-full flex-col rounded-lg border border-slate-100 bg-white p-3.5 shadow-sm shadow-slate-200/40">
+      <div className="grid flex-1 grid-cols-2 gap-2">
+        <div className="rounded-lg bg-slate-50 p-4">
+          <div className="text-xs font-bold text-slate-500">总销售额</div>
+          <div className="mt-2 text-3xl font-black tracking-normal text-slate-800">{money(sales)}</div>
+          <div className="mt-2 text-[11px] font-semibold leading-5 text-slate-500">含储值卡消费</div>
+        </div>
+        <div className="rounded-lg bg-slate-50 p-4">
+          <div className="text-xs font-bold text-slate-500">储值卡支付</div>
+          <div className="mt-2 text-3xl font-black tracking-normal text-slate-800">{money(storedBalance)}</div>
+          <div className="mt-2 text-[11px] font-semibold leading-5 text-slate-500">用于扣减营收</div>
+        </div>
+      </div>
+      <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-700">
+        总销售额 {money(sales)} - 储值卡支付 {money(storedBalance)} = 实际营收 {money(actualRevenue)}
       </div>
     </div>
   );
 }
 
-function Legend({ color, label }: { color: string; label: string }) {
+function Panel({ title, icon: Icon, action, subtitle, children }: { title: string; icon: typeof Store; action?: ReactNode; subtitle?: string; children: ReactNode }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className={cn('h-2.5 w-2.5 rounded-full', color)} />
-      {label}
-    </div>
+    <section className="rounded-lg border border-slate-100 bg-white shadow-sm shadow-slate-200/30">
+      <div className="flex min-h-11 items-center justify-between border-b border-slate-100 px-3.5">
+        <div className="flex flex-wrap items-center gap-2 text-sm font-black">
+          <Icon size={17} />
+          {title}
+          {subtitle && <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">{subtitle}</span>}
+        </div>
+        {action && <div className="text-xs font-bold text-slate-400">{action}</div>}
+      </div>
+      <div className="p-3.5">{children}</div>
+    </section>
   );
 }
 
 function Definition({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <div className="text-xs font-black text-slate-500">{label}</div>
-      <div className="mt-1 font-bold leading-6 text-slate-900">{value}</div>
+    <div className="flex items-center gap-1.5 rounded-md bg-slate-50 px-2.5 py-1.5 text-xs">
+      <span className="font-black text-slate-500">{label}</span>
+      <span className="font-bold text-slate-900">{value}</span>
     </div>
   );
 }
 
-function BarList({ rows, total }: { rows: { name: string; value: number; color: string }[]; total: number }) {
+function ProjectSummary({
+  rows,
+  orders,
+  selectedProject,
+  onSelectProject,
+  dashboard,
+}: {
+  rows: { key: string; total: ReturnType<typeof summarize> }[];
+  orders: RevenueOrder[];
+  selectedProject: Project;
+  onSelectProject: (project: Project) => void;
+  dashboard: DashboardType;
+}) {
+  const sourceOrder: Source[] = ['miniProgram', 'cashier', 'meituan', 'douyin'];
+  const selectedRow = rows.find((row) => row.key === selectedProject) ?? rows[0];
+  const selectedTotal = selectedRow?.total ?? summarize([]);
+
   return (
     <div className="space-y-4">
-      {rows.map((row) => {
-        const percent = total ? (row.value / total) * 100 : 0;
-        return (
-          <div key={row.name}>
-            <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-              <span className="font-black">{row.name}</span>
-              <span className="font-bold text-slate-500">{money(row.value)} / {percent.toFixed(1)}%</span>
-            </div>
-            <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-              <div className={cn('h-full rounded-full', row.color)} style={{ width: `${Math.max(percent, 3)}%` }} />
-            </div>
-          </div>
-        );
-      })}
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {rows.map((row) => {
+          const project = row.key as Project;
+          const item = projectMeta[project];
+          const Icon = item.icon;
+          const active = selectedProject === project;
+          const sourceTotals = sourceOrder.map((source) => ({
+            source,
+            total: summarize(orders.filter((order) => order.project === row.key && order.source === source)),
+          }));
+
+          return (
+            <button
+              key={row.key}
+              onClick={() => onSelectProject(project)}
+              className={cn('rounded-lg border bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/30', active ? 'border-blue-200 bg-blue-50/60 ring-1 ring-blue-100' : 'border-slate-100')}
+            >
+              <div className="flex items-center gap-2">
+                <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white', item.color)}>
+                  <Icon size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-black text-slate-700">{item.name}</div>
+                  <div className="mt-0.5 text-[11px] font-bold text-slate-400">{row.total.orders} 单</div>
+                </div>
+              </div>
+              <div className="mt-2 text-xl font-black text-slate-800">{money(row.total.actualRevenue)}</div>
+              <div className="mt-2 grid grid-cols-2 gap-1 text-[10px] font-semibold">
+                {sourceTotals.map(({ source, total }) => (
+                  <div key={source} className="min-w-0 rounded bg-white/70 px-1.5 py-1">
+                    <div className="truncate text-slate-400">
+                      {sourceMeta[source].name}
+                    </div>
+                    <div className="mt-0.5 truncate text-slate-600">{money(total.actualRevenue)}</div>
+                  </div>
+                ))}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {selectedRow && <ProjectDetailStats project={selectedProject} total={selectedTotal} dashboard={dashboard} />}
     </div>
   );
 }
 
-function DataTable({ rows, type, total }: { rows: { key: string; total: ReturnType<typeof summarize> }[]; type: Tab; total: number }) {
+function ProjectDetailStats({ project, total, dashboard }: { project: Project; total: ReturnType<typeof summarize>; dashboard: DashboardType }) {
+  const [expanded, setExpanded] = useState(false);
+  const details = buildProjectDetails(project, total);
+  const visibleDetails = expanded ? details : details.slice(0, 4);
+  const meta = projectMeta[project];
+  const isFitness = dashboard === 'fitness';
+
+  return (
+    <div className="rounded-lg border border-slate-100 bg-slate-50/70 p-3.5">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-sm font-black text-slate-800">{meta.name}明细统计</div>
+          <div className="mt-1 text-xs font-bold text-slate-500">点击项目卡片切换明细，主要统计口径为实际营收。</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="flex h-9 items-center gap-2 rounded-md bg-blue-600 px-3 text-sm font-bold text-white">
+            <Download size={15} />
+            导出
+          </button>
+        </div>
+      </div>
+      <div className="overflow-x-auto rounded-lg border border-slate-100 bg-white">
+        <table className={cn('w-full border-separate border-spacing-0 text-sm', isFitness ? 'min-w-[520px]' : 'min-w-[720px]')}>
+          <thead>
+            <tr className="text-xs font-black text-slate-500">
+              <th className="border-b border-slate-100 px-3 py-3 text-left">明细项目</th>
+              {!isFitness && <th className="border-b border-slate-100 px-3 py-3 text-right text-blue-700">总销售额</th>}
+              {!isFitness && <th className="border-b border-slate-100 px-3 py-3 text-right">储值卡支付</th>}
+              <th className="border-b border-slate-100 px-3 py-3 text-right text-indigo-700">实际营收</th>
+              <th className="border-b border-slate-100 px-3 py-3 text-right">优惠金额</th>
+              <th className="border-b border-slate-100 px-3 py-3 text-right">订单数</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleDetails.map((detail) => (
+              <tr key={detail.name} className="font-bold text-slate-800">
+                <td className="border-b border-slate-100 px-3 py-3">{detail.name}</td>
+                {!isFitness && <td className="border-b border-slate-100 bg-blue-50/40 px-3 py-3 text-right tabular-nums text-blue-700">{money(detail.sales)}</td>}
+                {!isFitness && <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(detail.storedBalance)}</td>}
+                <td className="border-b border-slate-100 bg-indigo-50/40 px-3 py-3 text-right tabular-nums text-indigo-700">{money(detail.actualRevenue)}</td>
+                <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(detail.discount)}</td>
+                <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{detail.orders}</td>
+              </tr>
+            ))}
+            <tr className="bg-slate-50 text-sm font-black text-slate-800">
+              <td className="border-b border-slate-100 px-3 py-3">合计</td>
+              {!isFitness && <td className="border-b border-slate-100 bg-blue-50/60 px-3 py-3 text-right tabular-nums text-blue-700">{money(total.sales)}</td>}
+              {!isFitness && <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(total.storedBalance)}</td>}
+              <td className="border-b border-slate-100 bg-indigo-50/60 px-3 py-3 text-right tabular-nums text-indigo-700">{money(total.actualRevenue)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{money(total.discount)}</td>
+              <td className="border-b border-slate-100 px-3 py-3 text-right tabular-nums">{total.orders}</td>
+            </tr>
+            {details.length > 4 && (
+              <tr>
+                <td colSpan={6} className="px-3 py-3 text-center">
+                  <button onClick={() => setExpanded((value) => !value)} className="inline-flex h-9 items-center gap-1 rounded-md px-3 text-sm font-bold text-blue-700 hover:bg-blue-50">
+                    {expanded ? '收起' : '查看更多'}
+                    <ChevronDown size={15} className={cn('transition', expanded && 'rotate-180')} />
+                  </button>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function buildProjectDetails(project: Project, total: ReturnType<typeof summarize>) {
+  return projectDetailCatalog[project].map((item, index, list) => {
+    const isLast = index === list.length - 1;
+    const usedReceivable = list.slice(0, index).reduce((sum, current) => sum + Math.round(total.receivable * current.weight), 0);
+    const usedDiscount = list.slice(0, index).reduce((sum, current) => sum + Math.round(total.discount * current.weight), 0);
+    const usedSales = list.slice(0, index).reduce((sum, current) => sum + Math.round(total.sales * current.weight), 0);
+    const usedStoredBalance = list.slice(0, index).reduce((sum, current) => sum + Math.round(total.storedBalance * current.weight), 0);
+    const usedRevenue = list.slice(0, index).reduce((sum, current) => sum + Math.round(total.actualRevenue * current.weight), 0);
+    const usedOrders = list.slice(0, index).reduce((sum, current) => sum + Math.round(total.orders * current.weight), 0);
+
+    return {
+      name: item.name,
+      receivable: isLast ? Math.max(total.receivable - usedReceivable, 0) : Math.round(total.receivable * item.weight),
+      discount: isLast ? Math.max(total.discount - usedDiscount, 0) : Math.round(total.discount * item.weight),
+      sales: isLast ? Math.max(total.sales - usedSales, 0) : Math.round(total.sales * item.weight),
+      storedBalance: isLast ? Math.max(total.storedBalance - usedStoredBalance, 0) : Math.round(total.storedBalance * item.weight),
+      actualRevenue: isLast ? Math.max(total.actualRevenue - usedRevenue, 0) : Math.round(total.actualRevenue * item.weight),
+      orders: isLast ? Math.max(total.orders - usedOrders, 0) : Math.round(total.orders * item.weight),
+    };
+  });
+}
+
+function DataTable({ rows, type, total, dashboard }: { rows: { key: string; total: ReturnType<typeof summarize> }[]; type: Tab; total: number; dashboard: DashboardType }) {
+  const isFitness = dashboard === 'fitness';
+
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm">
+      <table className={cn('w-full border-separate border-spacing-0 text-left text-sm', isFitness ? 'min-w-[520px]' : 'min-w-[680px]')}>
         <thead>
           <tr className="text-xs font-black text-slate-500">
-            <th className="border-b border-slate-100 py-3 pr-4">{tableTitle(type)}</th>
-            <th className="border-b border-slate-100 py-3 pr-4 text-right">应收金额</th>
-            <th className="border-b border-slate-100 py-3 pr-4 text-right">优惠金额</th>
-            <th className="border-b border-slate-100 py-3 pr-4 text-right">总销售额</th>
-            <th className="border-b border-slate-100 py-3 pr-4 text-right">储值卡支付</th>
-            <th className="border-b border-slate-100 py-3 pr-4 text-right">实际营收</th>
-            <th className="border-b border-slate-100 py-3 text-right">订单数</th>
+            <th className="w-[210px] border-b border-slate-100 py-3 pr-2">{tableTitle(type)}</th>
+            {!isFitness && <th className="border-b border-slate-100 px-2 py-3 text-right text-blue-700">总销售额</th>}
+            {!isFitness && <th className="border-b border-slate-100 px-2 py-3 text-right">储值卡支付</th>}
+            <th className="border-b border-slate-100 px-2 py-3 text-right text-indigo-700">实际营收</th>
+            <th className="border-b border-slate-100 px-2 py-3 text-right">优惠金额</th>
+            <th className="border-b border-slate-100 py-3 pl-2 text-right">订单数</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.key} className="font-bold text-slate-800">
-              <td className="border-b border-slate-100 py-3 pr-4">
+              <td className="w-[210px] border-b border-slate-100 py-3 pr-2">
                 <RowName rowKey={row.key} type={type} />
               </td>
-              <td className="border-b border-slate-100 py-3 pr-4 text-right">{money(row.total.receivable)}</td>
-              <td className="border-b border-slate-100 py-3 pr-4 text-right text-rose-600">{money(row.total.discount)}</td>
-              <td className="border-b border-slate-100 py-3 pr-4 text-right">{money(row.total.sales)}</td>
-              <td className="border-b border-slate-100 py-3 pr-4 text-right text-amber-700">{money(row.total.storedBalance)}</td>
-              <td className="border-b border-slate-100 py-3 pr-4 text-right text-slate-950">{money(row.total.actualRevenue)}</td>
-              <td className="border-b border-slate-100 py-3 text-right">
+              {!isFitness && <td className="border-b border-slate-100 bg-blue-50/40 px-2 py-3 text-right tabular-nums text-blue-700">{money(row.total.sales)}</td>}
+              {!isFitness && <td className="border-b border-slate-100 px-2 py-3 text-right tabular-nums">{money(row.total.storedBalance)}</td>}
+              <td className="border-b border-slate-100 bg-indigo-50/40 px-2 py-3 text-right tabular-nums text-indigo-700">{money(row.total.actualRevenue)}</td>
+              <td className="border-b border-slate-100 px-2 py-3 text-right tabular-nums">{money(row.total.discount)}</td>
+              <td className="border-b border-slate-100 py-3 pl-2 text-right tabular-nums">
                 {row.total.orders}
-                <span className="ml-2 text-xs text-slate-400">{total ? ((row.total.actualRevenue / total) * 100).toFixed(1) : '0.0'}%</span>
               </td>
             </tr>
           ))}
@@ -455,11 +1232,11 @@ function RowName({ rowKey, type }: { rowKey: string; type: Tab }) {
     const item = projectMeta[rowKey as Project];
     const Icon = item.icon;
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-white', item.color)}>
           <Icon size={16} />
         </span>
-        {item.name}
+        <span className="truncate">{item.name}</span>
       </div>
     );
   }
@@ -467,9 +1244,9 @@ function RowName({ rowKey, type }: { rowKey: string; type: Tab }) {
   if (type === 'source') {
     const item = sourceMeta[rowKey as Source];
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <span className={cn('h-2.5 w-2.5 rounded-full', item.color)} />
-        {item.name}
+        <span className="truncate">{item.name}</span>
         {item.tag && <span className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-700">{item.tag}</span>}
       </div>
     );
@@ -479,12 +1256,14 @@ function RowName({ rowKey, type }: { rowKey: string; type: Tab }) {
     const item = paymentMeta[rowKey as Payment];
     const Icon = item.icon;
     return (
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+      <div className="flex min-w-0 items-start gap-2">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
           <Icon size={16} />
         </span>
-        <span>{item.name}</span>
-        <span className={cn('rounded px-2 py-1 text-xs', item.revenue ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500')}>{item.revenue ? '计入实际营收' : '不计入营收'}</span>
+        <span className="min-w-0">
+          <span className="block truncate">{item.name}</span>
+          <span className={cn('mt-1 inline-flex rounded px-1.5 py-0.5 text-[11px]', item.revenue ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500')}>{item.revenue ? '计入实际营收' : '不计入营收'}</span>
+        </span>
       </div>
     );
   }
